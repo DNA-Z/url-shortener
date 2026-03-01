@@ -17,6 +17,13 @@ func NewUrl() *Url {
 }
 
 func (u *Url) Shorten(url string) string {
+
+	isUrlExist, id := u.urlExists(url)
+
+	if isUrlExist {
+		return id
+	}
+
 	newUrl := NewShortUrl(url)
 
 	u.Urls[newUrl.UrlID] = newUrl.LongUrl
@@ -31,4 +38,13 @@ func (u *Url) GetById(urlID string) (string, error) {
 	}
 
 	return foundUrl, nil
+}
+
+func (u *Url) urlExists(url string) (bool, string) {
+	for key, value := range u.Urls {
+		if value == url {
+			return true, key
+		}
+	}
+	return false, ""
 }
