@@ -6,6 +6,8 @@ import (
 )
 
 func (h *UrlHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
+	baseAddress := "http://" + req.Host + "/"
+
 	if req.Method != http.MethodPost {
 		http.Error(res, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
 		return
@@ -26,7 +28,7 @@ func (h *UrlHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result := h.urlService.Shorten(url)
+	result := baseAddress + h.urlService.Shorten(url)
 
 	res.WriteHeader(http.StatusCreated)
 	res.Write([]byte(result))
