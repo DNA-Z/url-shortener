@@ -8,13 +8,13 @@ import (
 )
 
 func main() {
-	urlService := service.NewUrl()
-	urlHandler := handler.NewUrlHandler(urlService)
+	urlService := service.NewURL()
+	urlHandler := handler.NewURLHandler(urlService)
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /", urlHandler.ShortenerPost)
-	mux.HandleFunc("GET /{id}", urlHandler.GetByIdGet)
+	mux.HandleFunc("GET /{id}", urlHandler.GetByIDGet)
 
 	err := http.ListenAndServe(":8080", mux)
 	if err != nil {

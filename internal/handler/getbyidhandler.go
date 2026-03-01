@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-func (h *UrlHandler) GetByIdGet(res http.ResponseWriter, req *http.Request) {
+func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)
 	}
@@ -15,7 +15,7 @@ func (h *UrlHandler) GetByIdGet(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, "ID not provided", http.StatusBadRequest)
 	}
 
-	result, err := h.urlService.GetById(id)
+	result, err := h.urlService.GetByID(id)
 
 	if err != nil {
 		http.Error(res, "URL not found", http.StatusBadRequest)

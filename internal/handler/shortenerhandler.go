@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func (h *UrlHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
+func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 	baseAddress := "http://" + req.Host + "/"
 
 	if req.Method != http.MethodPost {

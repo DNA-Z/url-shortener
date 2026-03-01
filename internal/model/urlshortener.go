@@ -5,21 +5,21 @@ import (
 	"strings"
 )
 
-type UrlShortener struct {
-	UrlID   string
-	LongUrl string
+type URLShortener struct {
+	URLID   string
+	LongURL string
 }
 
-func NewShortUrl(longUrl string) *UrlShortener {
-	urlID := generatedUrlID()
+func NewShortURL(longURL string) *URLShortener {
+	urlID := generatedURLID()
 
-	return &UrlShortener{
-		UrlID:   urlID,
-		LongUrl: longUrl,
+	return &URLShortener{
+		URLID:   urlID,
+		LongURL: longURL,
 	}
 }
 
-func generatedUrlID() string {
+func generatedURLID() string {
 
 	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
 		"abcdefghijklmnopqrstuvwxyz" +

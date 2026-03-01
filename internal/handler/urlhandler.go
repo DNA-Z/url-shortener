@@ -4,10 +4,10 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/service"
 )
 
-type UrlHandler struct {
-	urlService *service.Url
+type URLHandler struct {
+	urlService *service.URL
 }
 
-func NewUrlHandler(svc *service.Url) *UrlHandler {
-	return &UrlHandler{urlService: svc}
+func NewURLHandler(svc *service.URL) *URLHandler {
+	return &URLHandler{urlService: svc}
 }

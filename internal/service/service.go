@@ -3,44 +3,44 @@ package service
 import (
 	"fmt"
 
-	. "github.com/DNA-Z/url-shortener/internal/model"
+	"github.com/DNA-Z/url-shortener/internal/model"
 )
 
-type Url struct {
+type URL struct {
 	Urls map[string]string
 }
 
-func NewUrl() *Url {
-	return &Url{
+func NewURL() *URL {
+	return &URL{
 		Urls: make(map[string]string),
 	}
 }
 
-func (u *Url) Shorten(url string) string {
+func (u *URL) Shorten(url string) string {
 
-	isUrlExist, id := u.urlExists(url)
+	isURLExist, id := u.urlExists(url)
 
-	if isUrlExist {
+	if isURLExist {
 		return id
 	}
 
-	newUrl := NewShortUrl(url)
+	newURL := model.NewShortURL(url)
 
-	u.Urls[newUrl.UrlID] = newUrl.LongUrl
+	u.Urls[newURL.URLID] = newURL.LongURL
 
-	return newUrl.UrlID
+	return newURL.URLID
 }
 
-func (u *Url) GetById(urlID string) (string, error) {
-	foundUrl, ok := u.Urls[urlID]
+func (u *URL) GetByID(urlID string) (string, error) {
+	foundURL, ok := u.Urls[urlID]
 	if !ok {
 		return "", fmt.Errorf("URL %v not found", urlID)
 	}
 
-	return foundUrl, nil
+	return foundURL, nil
 }
 
-func (u *Url) urlExists(url string) (bool, string) {
+func (u *URL) urlExists(url string) (bool, string) {
 	for key, value := range u.Urls {
 		if value == url {
 			return true, key
