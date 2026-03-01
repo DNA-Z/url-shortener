@@ -3,13 +3,11 @@ package handler
 import (
 	"io"
 	"net/http"
-
-	"github.com/DNA-Z/url-shortener/internal/service"
 )
 
-func ShortenerPost(res http.ResponseWriter, req *http.Request) {
+func (h *UrlHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
-		http.Error(res, "The method is not supported", http.StatusMethodNotAllowed)
+		http.Error(res, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -28,7 +26,7 @@ func ShortenerPost(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result := service.ShortenUrl(url)
+	result := h.urlService.Shorten(url)
 
 	res.WriteHeader(http.StatusCreated)
 	res.Write([]byte(result))

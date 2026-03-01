@@ -10,7 +10,7 @@ type UrlShortener struct {
 	LongUrl string
 }
 
-func NewUrl(longUrl string) *UrlShortener {
+func NewShortUrl(longUrl string) *UrlShortener {
 	urlID := generatedUrlID()
 
 	return &UrlShortener{
