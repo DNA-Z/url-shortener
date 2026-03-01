@@ -1,4 +1,4 @@
-package getbyidhandler
+package handler
 
 import "net/http"
 
