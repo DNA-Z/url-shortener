@@ -3,10 +3,15 @@ package handler
 import (
 	"io"
 	"net/http"
+	"strings"
 )
 
 func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 	var baseAddress = h.baseURL
+
+	if !strings.HasSuffix(baseAddress, "/") {
+		baseAddress += "/"
+	}
 
 	if req.Method != http.MethodPost {
 		http.Error(res, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
@@ -28,7 +33,7 @@ func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result := baseAddress + "/" + h.urlService.Shorten(url)
+	result := baseAddress + h.urlService.Shorten(url)
 
 	res.WriteHeader(http.StatusCreated)
 	res.Write([]byte(result))
