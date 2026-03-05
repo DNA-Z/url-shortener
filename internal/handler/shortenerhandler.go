@@ -28,7 +28,7 @@ func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result := baseAddress + h.urlService.Shorten(url)
+	result := baseAddress + "/" + h.urlService.Shorten(url)
 
 	res.WriteHeader(http.StatusCreated)
 	res.Write([]byte(result))
