@@ -11,14 +11,14 @@ type Options struct {
 
 func NewOptions() *Options {
 	return &Options{
-		ServerAddress: "localhost:8888",
-		BaseURL:       "http://localhost:8000/",
+		ServerAddress: "localhost:8080",
+		BaseURL:       "http://localhost:8080/",
 	}
 }
 
 func (o *Options) OptionsInit() {
-	serverAddress := flag.String("a", "localhost:8888", "адрес HTTP-сервера")
-	baseURL := flag.String("b", "http://localhost:8000/", "базовый адрес URL")
+	serverAddress := flag.String("a", "localhost:8080", "адрес HTTP-сервера")
+	baseURL := flag.String("b", "http://localhost:8080/", "базовый адрес URL")
 
 	flag.Parse()
 

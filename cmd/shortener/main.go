@@ -15,11 +15,12 @@ func main() {
 	configur.OptionsInit()
 
 	urlService := service.NewURL()
-	urlHandler := handler.NewURLHandler(urlService)
+	urlHandler := handler.NewURLHandler(urlService, configur.ServerAddress, configur.BaseURL)
 
 	r := chi.NewRouter()
 	r.Get("/{id}", urlHandler.GetByIDGet)
 	r.Post("/", urlHandler.ShortenerPost)
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Printf("Сервер запущен на %s\n", configur.ServerAddress)
+	log.Fatal(http.ListenAndServe(configur.ServerAddress, r))
 }
