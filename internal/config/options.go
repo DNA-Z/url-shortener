@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"os"
 )
 
 type Options struct {
@@ -17,11 +18,32 @@ func NewOptions() *Options {
 }
 
 func (o *Options) OptionsInit() {
-	serverAddress := flag.String("a", "localhost:8080", "адрес HTTP-сервера")
-	baseURL := flag.String("b", "http://localhost:8080/", "базовый адрес URL")
+	defaultServerAddress := o.ServerAddress
+	defaultBaseURL := o.BaseURL
+
+	serverAddressFlag := flag.String("a", defaultServerAddress, "адрес HTTP-сервера")
+	baseURLFlag := flag.String("b", defaultBaseURL, "базовый адрес URL")
 
 	flag.Parse()
 
-	o.ServerAddress = *serverAddress
-	o.BaseURL = *baseURL
+	o.ServerAddressSet(serverAddressFlag)
+	o.BaseURLSet(baseURLFlag)
+}
+
+func (o *Options) ServerAddressSet(serverAddressFlag *string) {
+	switch {
+	case os.Getenv("SERVER_ADDRESS") != "":
+		o.ServerAddress = os.Getenv("SERVER_ADDRESS")
+	case *serverAddressFlag != o.ServerAddress:
+		o.ServerAddress = *serverAddressFlag
+	}
+}
+
+func (o *Options) BaseURLSet(baseURLFlag *string) {
+	switch {
+	case os.Getenv("BASE_URL") != "":
+		o.BaseURL = os.Getenv("BASE_URL")
+	case *baseURLFlag != o.BaseURL:
+		o.BaseURL = *baseURLFlag
+	}
 }
