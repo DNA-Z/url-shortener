@@ -6,21 +6,34 @@ import (
 
 	"github.com/DNA-Z/url-shortener/internal/config"
 	"github.com/DNA-Z/url-shortener/internal/handler"
+	"github.com/DNA-Z/url-shortener/internal/middleware"
 	"github.com/DNA-Z/url-shortener/internal/service"
 	"github.com/go-chi/chi/v5"
+
+	"go.uber.org/zap"
 )
 
 func main() {
-	configur := config.NewOptions()
-	configur.OptionsInit()
+	logger, err := zap.NewDevelopment()
+
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+
+	middleware.InitLogger(logger)
+
+	configure := config.NewOptions()
+	configure.OptionsInit()
 
 	urlService := service.NewURL()
-	urlHandler := handler.NewURLHandler(urlService, configur.ServerAddress, configur.BaseURL)
+	urlHandler := handler.NewURLHandler(urlService, configure.ServerAddress, configure.BaseURL)
 
 	r := chi.NewRouter()
+	r.Use(middleware.WithLogging)
 	r.Get("/{id}", urlHandler.GetByIDGet)
 	r.Post("/", urlHandler.ShortenerPost)
 
-	log.Printf("Сервер запущен на %s\n", configur.ServerAddress)
-	log.Fatal(http.ListenAndServe(configur.ServerAddress, r))
+	log.Printf("Сервер запущен на %s\n", configure.ServerAddress)
+	log.Fatal(http.ListenAndServe(configure.ServerAddress, r))
 }
