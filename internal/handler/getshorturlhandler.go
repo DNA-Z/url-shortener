@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/DNA-Z/url-shortener/internal/dto"
 )
@@ -14,6 +15,10 @@ func (h *URLHandler) ShortUrlPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	var baseAddress = h.baseURL
+	if !strings.HasSuffix(baseAddress, "/") {
+		baseAddress += "/"
+	}
+
 	var request dto.URLRequestDto
 	var response dto.URLResponseDto
 	var buf bytes.Buffer
