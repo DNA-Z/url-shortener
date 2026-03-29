@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -21,17 +20,15 @@ func (h *URLHandler) ShortUrlPost(w http.ResponseWriter, req *http.Request) {
 
 	var request dto.URLRequestDto
 	var response dto.URLResponseDto
-	var buf bytes.Buffer
 
-	_, err := buf.ReadFrom(req.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	dec := json.NewDecoder(req.Body)
+	if err := dec.Decode(&request); err != nil {
+		http.Error(w, "Cannot decode request JSON body", http.StatusBadRequest)
 		return
 	}
-
-	err = json.Unmarshal(buf.Bytes(), &request)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if request.URL == "" {
+		http.Error(w, "URL in JSON is empty", http.StatusBadRequest)
+		return
 	}
 
 	shortUrl, err := h.urlService.GetShortUrl(request.URL)
@@ -40,17 +37,13 @@ func (h *URLHandler) ShortUrlPost(w http.ResponseWriter, req *http.Request) {
 	}
 
 	response.ShortURL = baseAddress + shortUrl
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
 
-	resp, err := json.Marshal(response)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(response); err != nil {
+		http.Error(w, "Error encoding response", http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
 }
