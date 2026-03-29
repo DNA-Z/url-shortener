@@ -40,6 +40,15 @@ func (u *URL) GetByID(urlID string) (string, error) {
 	return foundURL, nil
 }
 
+func (u *URL) GetShortUrl(url string) (string, error) {
+	for key, value := range u.Urls {
+		if value == url {
+			return key, nil
+		}
+	}
+	return "", fmt.Errorf("URL %v not found", url)
+}
+
 func (u *URL) urlExists(url string) (bool, string) {
 	for key, value := range u.Urls {
 		if value == url {
