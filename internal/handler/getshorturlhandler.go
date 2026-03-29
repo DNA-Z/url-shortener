@@ -44,7 +44,7 @@ func (h *URLHandler) ShortUrlPost(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
-	resp, err := json.Marshal(response.ShortURL)
+	resp, err := json.Marshal(response)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
