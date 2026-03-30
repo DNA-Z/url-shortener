@@ -2,13 +2,16 @@ package handler
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/DNA-Z/url-shortener/internal/dto"
 	"github.com/DNA-Z/url-shortener/internal/service"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestURLHandler_GetByIDGet(t *testing.T) {
@@ -135,4 +138,63 @@ func TestURLHandler_ShortenerPost(t *testing.T) {
 			}
 		})
 	}
+}
+func TestURLHandler_ShortenURLPost(t *testing.T) {
+	urlService := service.NewURL()
+	handler := &URLHandler{
+		urlService: urlService,
+		baseURL:    "http://localhost:8080",
+	}
+
+	t.Run("returns 400 if JSON body is invalid", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer([]byte(`{invalid json}`)))
+		w := httptest.NewRecorder()
+
+		handler.ShortenURLPost(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "Cannot decode request JSON body")
+	})
+
+	t.Run("returns 400 if URL field is empty", func(t *testing.T) {
+		requestBody := dto.URLRequestDto{URL: ""}
+		body, _ := json.Marshal(requestBody)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		handler.ShortenURLPost(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "URL in JSON is empty")
+	})
+
+	t.Run("successfully shortens valid URL and returns shortened link", func(t *testing.T) {
+		originalURL := "https://example.com/very/long/path"
+		requestBody := dto.URLRequestDto{URL: originalURL}
+		body, _ := json.Marshal(requestBody)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		handler.ShortenURLPost(w, req)
+
+		assert.Equal(t, http.StatusCreated, w.Code)
+		assert.Contains(t, w.Header().Get("Content-Type"), "application/json")
+
+		var response dto.URLResponseDto
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		require.NoError(t, err)
+
+		assert.True(t, strings.HasPrefix(response.ShortURL, "http://localhost:8080/"))
+		shortID := response.ShortURL[len("http://localhost:8080/"):]
+		assert.NotEmpty(t, shortID)
+
+		// Проверим, что ID действительно ведёт к оригинальному URL
+		retrievedURL, err := urlService.GetByID(shortID)
+		require.NoError(t, err)
+		assert.Equal(t, originalURL, retrievedURL)
+	})
 }
