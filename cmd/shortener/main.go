@@ -33,7 +33,7 @@ func main() {
 	r.Use(middleware.WithLogging)
 	r.Get("/{id}", urlHandler.GetByIDGet)
 	r.Post("/", urlHandler.ShortenerPost)
-	r.Post("/api/shorten", urlHandler.ShortUrlPost)
+	r.Post("/api/shorten", urlHandler.ShortenURLPost)
 
 	log.Printf("Сервер запущен на %s\n", configure.ServerAddress)
 	log.Fatal(http.ListenAndServe(configure.ServerAddress, r))

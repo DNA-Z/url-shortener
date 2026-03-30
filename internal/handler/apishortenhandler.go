@@ -8,7 +8,7 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/dto"
 )
 
-func (h *URLHandler) ShortUrlPost(w http.ResponseWriter, req *http.Request) {
+func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
 		return
@@ -31,11 +31,7 @@ func (h *URLHandler) ShortUrlPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortUrl, err := h.urlService.GetShortUrl(request.URL)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-	}
-
+	shortUrl := h.urlService.Shorten(request.URL)
 	response.ShortURL = baseAddress + shortUrl
 
 	w.Header().Set("Content-Type", "application/json")
