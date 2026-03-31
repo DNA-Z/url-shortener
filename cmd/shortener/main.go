@@ -30,7 +30,8 @@ func main() {
 	urlHandler := handler.NewURLHandler(urlService, configure.ServerAddress, configure.BaseURL)
 
 	r := chi.NewRouter()
-	r.Use(middleware.WithLogging)
+	r.Use(middleware.LoggerMiddleware)
+	r.Use(middleware.GzipMiddleware)
 	r.Get("/{id}", urlHandler.GetByIDGet)
 	r.Post("/", urlHandler.ShortenerPost)
 	r.Post("/api/shorten", urlHandler.ShortenURLPost)

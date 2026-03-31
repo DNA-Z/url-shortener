@@ -1,4 +1,3 @@
-// internal/middleware/logging.go
 package middleware
 
 import (
@@ -14,7 +13,7 @@ func InitLogger(logger *zap.Logger) {
 	sugar = logger.Sugar()
 }
 
-func WithLogging(next http.Handler) http.Handler {
+func LoggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
