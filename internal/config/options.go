@@ -15,7 +15,7 @@ func NewOptions() *Options {
 	return &Options{
 		ServerAddress:   "localhost:8080",
 		BaseURL:         "http://localhost:8080/",
-		FileStoragePath: "./short_url",
+		FileStoragePath: "short_url",
 	}
 }
 

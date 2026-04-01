@@ -16,7 +16,6 @@ import (
 
 func main() {
 	logger, err := zap.NewDevelopment()
-
 	if err != nil {
 		panic(err)
 	}
@@ -28,7 +27,13 @@ func main() {
 	configure.OptionsInit()
 
 	consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
+	if err != nil {
+		logger.Fatal("Error creating consumer", zap.Error(err))
+	}
 	producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
+	if err != nil {
+		logger.Fatal("Error creating producer", zap.Error(err))
+	}
 
 	urlService := service.NewURL(*consumer, *producer)
 	urlHandler := handler.NewURLHandler(urlService, configure.ServerAddress, configure.BaseURL)
