@@ -25,10 +25,20 @@ func (cw *CompressWriter) Write(data []byte) (int, error) {
 	if !cw.shouldCompress() {
 		return cw.ResponseWriter.Write(data)
 	}
+
+	if cw.Writer == nil {
+		cw.Writer = gzip.NewWriter(cw.ResponseWriter)
+		cw.ResponseWriter.Header().Set("Content-Encoding", "gzip")
+		cw.ResponseWriter.Header().Del("Content-Length") // иначе размер не совпадёт
+	}
+
 	return cw.Writer.Write(data)
 }
 
 func (cw *CompressWriter) Close() error {
+	if cw.Writer == nil {
+		return nil
+	}
 	return cw.Writer.Close()
 }
 
