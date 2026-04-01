@@ -8,7 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/DNA-Z/url-shortener/internal/config"
 	"github.com/DNA-Z/url-shortener/internal/dto"
+	"github.com/DNA-Z/url-shortener/internal/infrastructure"
 	"github.com/DNA-Z/url-shortener/internal/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,8 +29,16 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 		{
 			name: "successful redirect with valid ID",
 			svc: func() *service.URL {
-				svc := service.NewURL()
-				svc.Urls = map[string]string{
+				configure := config.NewOptions()
+				configure.OptionsInit()
+				consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
+				if err != nil {
+				}
+				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
+				if err != nil {
+				}
+				svc := service.NewURL(*consumer, *producer)
+				svc.URLs = map[string]string{
 					"123": "https://example.com",
 				}
 				return svc
@@ -46,8 +56,16 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 		{
 			name: "non-existent ID returns error",
 			svc: func() *service.URL {
-				svc := service.NewURL()
-				svc.Urls = map[string]string{
+				configure := config.NewOptions()
+				configure.OptionsInit()
+				consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
+				if err != nil {
+				}
+				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
+				if err != nil {
+				}
+				svc := service.NewURL(*consumer, *producer)
+				svc.URLs = map[string]string{
 					"existing-id": "https://example.com",
 				}
 				return svc
@@ -65,7 +83,15 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 		{
 			name: "empty URLs map returns error",
 			svc: func() *service.URL {
-				return service.NewURL()
+				configure := config.NewOptions()
+				configure.OptionsInit()
+				consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
+				if err != nil {
+				}
+				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
+				if err != nil {
+				}
+				return service.NewURL(*consumer, *producer)
 			}(),
 			req: func() *http.Request {
 				req := httptest.NewRequest(http.MethodGet, "/url/any-id", nil)
@@ -115,7 +141,15 @@ func TestURLHandler_ShortenerPost(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := service.NewURL()
+			configure := config.NewOptions()
+			configure.OptionsInit()
+			consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
+			if err != nil {
+			}
+			producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
+			if err != nil {
+			}
+			svc := service.NewURL(*consumer, *producer)
 			h := NewURLHandler(svc, "localhost:8080", "http://localhost:8080/")
 
 			req1 := httptest.NewRequest(http.MethodPost, "/shorten", bytes.NewBufferString(tt.url1))
@@ -140,7 +174,15 @@ func TestURLHandler_ShortenerPost(t *testing.T) {
 	}
 }
 func TestURLHandler_ShortenURLPost(t *testing.T) {
-	urlService := service.NewURL()
+	configure := config.NewOptions()
+	configure.OptionsInit()
+	consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
+	if err != nil {
+	}
+	producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
+	if err != nil {
+	}
+	urlService := service.NewURL(*consumer, *producer)
 	handler := &URLHandler{
 		urlService: urlService,
 		baseURL:    "http://localhost:8080",

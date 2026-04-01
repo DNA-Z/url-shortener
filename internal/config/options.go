@@ -24,15 +24,23 @@ func (o *Options) OptionsInit() {
 	defaultBaseURL := o.BaseURL
 	defaultFileStoragePath := o.FileStoragePath
 
-	serverAddressFlag := flag.String("a", defaultServerAddress, "адрес HTTP-сервера")
-	baseURLFlag := flag.String("b", defaultBaseURL, "базовый адрес URL")
-	fileStoragePath := flag.String("f", defaultFileStoragePath, "файл в корне проекта")
+	// Проверяем, определён ли уже флаг "a"
+	if flag.Lookup("a") == nil {
+		serverAddressFlag := flag.String("a", defaultServerAddress, "адрес HTTP-сервера")
+		baseURLFlag := flag.String("b", defaultBaseURL, "базовый адрес URL")
+		fileStoragePath := flag.String("f", defaultFileStoragePath, "файл в корне проекта")
 
-	flag.Parse()
+		flag.Parse()
 
-	o.ServerAddressSet(serverAddressFlag)
-	o.BaseURLSet(baseURLFlag)
-	o.PathToFile(fileStoragePath)
+		o.ServerAddressSet(serverAddressFlag)
+		o.BaseURLSet(baseURLFlag)
+		o.PathToFile(fileStoragePath)
+	} else {
+		// Флаги уже проинициализированы — просто используем текущие значения
+		o.ServerAddressSet(&o.ServerAddress)
+		o.BaseURLSet(&o.BaseURL)
+		o.PathToFile(&o.FileStoragePath)
+	}
 }
 
 func (o *Options) ServerAddressSet(serverAddressFlag *string) {
