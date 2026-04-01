@@ -35,6 +35,14 @@ func (cw *CompressWriter) Write(data []byte) (int, error) {
 	return cw.Writer.Write(data)
 }
 
+func (cw *CompressWriter) WriteHeader(statusCode int) {
+	if !cw.shouldCompress() {
+		cw.Header().Set("Content-Encoding", "gzip")
+	}
+
+	cw.WriteHeader(statusCode)
+}
+
 func (cw *CompressWriter) Close() error {
 	if cw.Writer == nil {
 		return nil
