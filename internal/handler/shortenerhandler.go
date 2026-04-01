@@ -33,7 +33,12 @@ func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result := baseAddress + h.urlService.Shorten(url)
+	shortURL, err := h.urlService.Shorten(url)
+	if err != nil {
+		http.Error(res, "Error shortening URL: "+err.Error(), http.StatusBadRequest)
+	}
+
+	result := baseAddress + shortURL
 
 	res.WriteHeader(http.StatusCreated)
 	res.Write([]byte(result))

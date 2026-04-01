@@ -31,7 +31,12 @@ func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortUrl := h.urlService.Shorten(request.URL)
+	shortUrl, err := h.urlService.Shorten(request.URL)
+	if err != nil {
+		http.Error(w, "URL shorten error", http.StatusBadRequest)
+		return
+	}
+
 	response.ShortURL = baseAddress + shortUrl
 
 	w.Header().Set("Content-Type", "application/json")

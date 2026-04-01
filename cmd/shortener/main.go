@@ -6,6 +6,7 @@ import (
 
 	"github.com/DNA-Z/url-shortener/internal/config"
 	"github.com/DNA-Z/url-shortener/internal/handler"
+	"github.com/DNA-Z/url-shortener/internal/infrastructure"
 	"github.com/DNA-Z/url-shortener/internal/middleware"
 	"github.com/DNA-Z/url-shortener/internal/service"
 	"github.com/go-chi/chi/v5"
@@ -26,7 +27,10 @@ func main() {
 	configure := config.NewOptions()
 	configure.OptionsInit()
 
-	urlService := service.NewURL()
+	consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
+	producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
+
+	urlService := service.NewURL(*consumer, *producer)
 	urlHandler := handler.NewURLHandler(urlService, configure.ServerAddress, configure.BaseURL)
 
 	r := chi.NewRouter()
