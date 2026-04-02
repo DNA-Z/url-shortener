@@ -35,7 +35,7 @@ func main() {
 		logger.Fatal("Error creating producer", zap.Error(err))
 	}
 
-	urlService := service.NewURL(*consumer, *producer)
+	urlService := service.NewURL(consumer, producer)
 	urlHandler := handler.NewURLHandler(urlService, configure.ServerAddress, configure.BaseURL)
 
 	r := chi.NewRouter()
