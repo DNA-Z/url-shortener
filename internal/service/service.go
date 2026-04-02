@@ -8,12 +8,12 @@ import (
 )
 
 type URL struct {
-	consumer infrastructure.URLConsumer
-	producer infrastructure.URLProducer
+	consumer *infrastructure.URLConsumer
+	producer *infrastructure.URLProducer
 	URLs     map[string]string
 }
 
-func NewURL(consumer infrastructure.URLConsumer, producer infrastructure.URLProducer) *URL {
+func NewURL(consumer *infrastructure.URLConsumer, producer *infrastructure.URLProducer) *URL {
 	urlService := &URL{
 		consumer: consumer,
 		producer: producer,
