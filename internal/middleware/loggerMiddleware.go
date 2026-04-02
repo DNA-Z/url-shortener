@@ -20,6 +20,12 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 		uri := r.RequestURI
 		method := r.Method
 
+		rw := &responseWriter{
+			ResponseWriter: w,
+			statusCode:     http.StatusOK,
+			bodySize:       0,
+		}
+
 		next.ServeHTTP(w, r)
 
 		duration := time.Since(start)
@@ -27,6 +33,8 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 		sugar.Infoln(
 			"uri", uri,
 			"method", method,
+			"status", rw.statusCode,
+			"size", rw.bodySize,
 			"duration", duration,
 		)
 	})
@@ -34,8 +42,17 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 
 type responseWriter struct {
 	http.ResponseWriter
+	statusCode int
+	bodySize   int
 }
 
 func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
+}
+
+func (rw *responseWriter) Write(data []byte) (int, error) {
+	size, err := rw.ResponseWriter.Write(data)
+	rw.bodySize += size
+	return size, err
 }
