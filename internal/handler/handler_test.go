@@ -32,11 +32,9 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 				configure := config.NewOptions()
 				configure.OptionsInit()
 				consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
-				if err != nil {
-				}
+				require.NoError(t, err, "failed to create consumer")
 				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
-				if err != nil {
-				}
+				require.NoError(t, err, "failed to create producer")
 				svc := service.NewURL(*consumer, *producer)
 				svc.URLs = map[string]string{
 					"123": "https://example.com",
@@ -59,11 +57,9 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 				configure := config.NewOptions()
 				configure.OptionsInit()
 				consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
-				if err != nil {
-				}
+				require.NoError(t, err, "failed to create consumer")
 				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
-				if err != nil {
-				}
+				require.NoError(t, err, "failed to create producer")
 				svc := service.NewURL(*consumer, *producer)
 				svc.URLs = map[string]string{
 					"existing-id": "https://example.com",
@@ -86,11 +82,9 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 				configure := config.NewOptions()
 				configure.OptionsInit()
 				consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
-				if err != nil {
-				}
+				require.NoError(t, err, "failed to create consumer")
 				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
-				if err != nil {
-				}
+				require.NoError(t, err, "failed to create producer")
 				return service.NewURL(*consumer, *producer)
 			}(),
 			req: func() *http.Request {
@@ -144,11 +138,9 @@ func TestURLHandler_ShortenerPost(t *testing.T) {
 			configure := config.NewOptions()
 			configure.OptionsInit()
 			consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
-			if err != nil {
-			}
+			require.NoError(t, err, "failed to create consumer")
 			producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
-			if err != nil {
-			}
+			require.NoError(t, err, "failed to create producer")
 			svc := service.NewURL(*consumer, *producer)
 			h := NewURLHandler(svc, "localhost:8080", "http://localhost:8080/")
 
@@ -177,11 +169,9 @@ func TestURLHandler_ShortenURLPost(t *testing.T) {
 	configure := config.NewOptions()
 	configure.OptionsInit()
 	consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
-	if err != nil {
-	}
+	require.NoError(t, err, "failed to create consumer")
 	producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
-	if err != nil {
-	}
+	require.NoError(t, err, "failed to create producer")
 	urlService := service.NewURL(*consumer, *producer)
 	handler := &URLHandler{
 		urlService: urlService,
