@@ -35,7 +35,7 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 				require.NoError(t, err, "failed to create consumer")
 				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
 				require.NoError(t, err, "failed to create producer")
-				svc := service.NewURL(*consumer, *producer)
+				svc := service.NewURL(consumer, producer)
 				svc.URLs = map[string]string{
 					"123": "https://example.com",
 				}
@@ -60,7 +60,7 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 				require.NoError(t, err, "failed to create consumer")
 				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
 				require.NoError(t, err, "failed to create producer")
-				svc := service.NewURL(*consumer, *producer)
+				svc := service.NewURL(consumer, producer)
 				svc.URLs = map[string]string{
 					"existing-id": "https://example.com",
 				}
@@ -85,7 +85,7 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 				require.NoError(t, err, "failed to create consumer")
 				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
 				require.NoError(t, err, "failed to create producer")
-				return service.NewURL(*consumer, *producer)
+				return service.NewURL(consumer, producer)
 			}(),
 			req: func() *http.Request {
 				req := httptest.NewRequest(http.MethodGet, "/url/any-id", nil)
@@ -141,7 +141,7 @@ func TestURLHandler_ShortenerPost(t *testing.T) {
 			require.NoError(t, err, "failed to create consumer")
 			producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
 			require.NoError(t, err, "failed to create producer")
-			svc := service.NewURL(*consumer, *producer)
+			svc := service.NewURL(consumer, producer)
 			h := NewURLHandler(svc, "localhost:8080", "http://localhost:8080/")
 
 			req1 := httptest.NewRequest(http.MethodPost, "/shorten", bytes.NewBufferString(tt.url1))
@@ -172,7 +172,7 @@ func TestURLHandler_ShortenURLPost(t *testing.T) {
 	require.NoError(t, err, "failed to create consumer")
 	producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
 	require.NoError(t, err, "failed to create producer")
-	urlService := service.NewURL(*consumer, *producer)
+	urlService := service.NewURL(consumer, producer)
 	handler := &URLHandler{
 		urlService: urlService,
 		baseURL:    "http://localhost:8080",
