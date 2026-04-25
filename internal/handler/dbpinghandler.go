@@ -8,11 +8,17 @@ import (
 )
 
 type DBPingHandler struct {
-	db *sql.DB
+	db            *sql.DB
+	serverAddress string
+	baseURL       string
 }
 
-func NewDBPingHandler(db *sql.DB) *DBPingHandler {
-	return &DBPingHandler{db: db}
+func NewDBPingHandler(db *sql.DB, serverAddress string, baseURL string) *DBPingHandler {
+	return &DBPingHandler{
+		db:            db,
+		serverAddress: serverAddress,
+		baseURL:       baseURL,
+	}
 }
 
 func (h *DBPingHandler) GetDbPing(res http.ResponseWriter, req *http.Request) {

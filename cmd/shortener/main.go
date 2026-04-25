@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"net/http"
 
@@ -17,37 +18,17 @@ import (
 )
 
 func main() {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync()
-
-	middleware.InitLogger(logger)
-
-	dbConfig := db.DBConfigInit()
-	ctx := context.Background()
-	database, err := infrastructure.DbConnect(ctx, dbConfig)
-	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
-	}
-	defer database.Close()
-
+	logger := getLogger()
+	database := getDB()
 	configure := config.NewOptions()
 	configure.OptionsInit()
-
-	consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
-	if err != nil {
-		logger.Fatal("Error creating consumer", zap.Error(err))
-	}
-	producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
-	if err != nil {
-		logger.Fatal("Error creating producer", zap.Error(err))
-	}
+	consumer, producer := getBroker(getLogger(), configure.FileStoragePath)
 
 	urlService := service.NewURL(consumer, producer)
 	urlHandler := handler.NewURLHandler(urlService, configure.ServerAddress, configure.BaseURL)
-	pingHandler := handler.NewDBPingHandler(database)
+	pingHandler := handler.NewDBPingHandler(database, configure.ServerAddress, configure.BaseURL)
+
+	middleware.InitLogger(logger)
 
 	r := chi.NewRouter()
 	r.Use(middleware.LoggerMiddleware)
@@ -59,4 +40,39 @@ func main() {
 
 	log.Printf("Сервер запущен на %s\n", configure.ServerAddress)
 	log.Fatal(http.ListenAndServe(configure.ServerAddress, r))
+}
+
+func getLogger() *zap.Logger {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
+
+	return logger
+}
+
+func getDB() *sql.DB {
+	dbConfig := db.DBConfigInit()
+	ctx := context.Background()
+	database, err := infrastructure.DbConnect(ctx, dbConfig)
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+	defer database.Close()
+
+	return database
+}
+
+func getBroker(log *zap.Logger, fspath string) (*infrastructure.URLConsumer, *infrastructure.URLProducer) {
+	consumer, err := infrastructure.NewConsumer(fspath)
+	if err != nil {
+		log.Fatal("Error creating consumer", zap.Error(err))
+	}
+	producer, err := infrastructure.NewURLProducer(fspath)
+	if err != nil {
+		log.Fatal("Error creating producer", zap.Error(err))
+	}
+
+	return consumer, producer
 }
