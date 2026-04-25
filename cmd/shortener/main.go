@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 
 	"github.com/DNA-Z/url-shortener/internal/config"
+	"github.com/DNA-Z/url-shortener/internal/config/db"
 	"github.com/DNA-Z/url-shortener/internal/handler"
 	"github.com/DNA-Z/url-shortener/internal/infrastructure"
 	"github.com/DNA-Z/url-shortener/internal/middleware"
@@ -23,6 +25,14 @@ func main() {
 
 	middleware.InitLogger(logger)
 
+	dbConfig := db.DBConfigInit()
+	ctx := context.Background()
+	database, err := infrastructure.DbConnect(ctx, dbConfig)
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+	defer database.Close()
+
 	configure := config.NewOptions()
 	configure.OptionsInit()
 
@@ -37,10 +47,12 @@ func main() {
 
 	urlService := service.NewURL(consumer, producer)
 	urlHandler := handler.NewURLHandler(urlService, configure.ServerAddress, configure.BaseURL)
+	pingHandler := handler.NewDBPingHandler(database)
 
 	r := chi.NewRouter()
 	r.Use(middleware.LoggerMiddleware)
 	r.Use(middleware.GzipMiddleware)
+	r.Get("/ping", pingHandler.GetDbPing)
 	r.Get("/{id}", urlHandler.GetByIDGet)
 	r.Post("/", urlHandler.ShortenerPost)
 	r.Post("/api/shorten", urlHandler.ShortenURLPost)
