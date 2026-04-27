@@ -11,7 +11,7 @@ type DBConfig struct {
 
 func NewDBConfig() *DBConfig {
 	return &DBConfig{
-		ConnectionString: "host=localhost port=5432 user=postgres password=postgres dbname=short_url sslmode=disable",
+		ConnectionString: "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable",
 	}
 }
 
