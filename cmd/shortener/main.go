@@ -19,21 +19,21 @@ import (
 
 func main() {
 	logger := getLogger()
-	//database := getDB()
+	database := getDB()
 	configure := config.NewOptions()
 	configure.OptionsInit()
 	consumer, producer := getBroker(getLogger(), configure.FileStoragePath)
 
 	urlService := service.NewURL(consumer, producer)
 	urlHandler := handler.NewURLHandler(urlService, configure.ServerAddress, configure.BaseURL)
-	//pingHandler := handler.NewDBPingHandler(database, configure.ServerAddress, configure.BaseURL)
+	pingHandler := handler.NewDBPingHandler(database, configure.ServerAddress, configure.BaseURL)
 
 	middleware.InitLogger(logger)
 
 	r := chi.NewRouter()
 	r.Use(middleware.LoggerMiddleware)
 	r.Use(middleware.GzipMiddleware)
-	//r.Get("/ping", pingHandler.GetDbPing)
+	r.Get("/ping", pingHandler.GetDbPing)
 	r.Get("/{id}", urlHandler.GetByIDGet)
 	r.Post("/", urlHandler.ShortenerPost)
 	r.Post("/api/shorten", urlHandler.ShortenURLPost)
