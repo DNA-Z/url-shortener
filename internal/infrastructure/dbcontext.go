@@ -16,7 +16,7 @@ func DbConnect(ctx context.Context, cfg *db.DBConfig) (*sql.DB, error) {
 
 	db, err := sql.Open("pgx", strConn)
 	if err != nil {
-		log.Fatal("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
 	db.SetMaxOpenConns(10)
