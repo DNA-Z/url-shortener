@@ -9,24 +9,31 @@ type DBConfig struct {
 	ConnectionString string
 }
 
-func DBConfigInit() *DBConfig {
-	cfg := &DBConfig{}
-
-	defaultDSN := "host=localhost port=5432 user=postgres password=lightning dbname=short_url sslmode=disable"
-
-	var dsnFlag string
-	flag.StringVar(&dsnFlag, "d", defaultDSN, "строка подключения к БД")
-	flag.Parse()
-
-	if envDSN := os.Getenv("DATABASE_DSN"); envDSN != "" {
-		cfg.ConnectionString = envDSN
-	} else {
-		cfg.ConnectionString = dsnFlag
+func NewDBConfig() *DBConfig {
+	return &DBConfig{
+		ConnectionString: "host=localhost port=5432 user=postgres password=lightning dbname=short_url sslmode=disable",
 	}
-
-	return cfg
 }
 
-func (cfg *DBConfig) GetConnectionString() string {
-	return cfg.ConnectionString
+func (cfg *DBConfig) DBConfigInit() {
+	defaultConnectionStr := cfg.ConnectionString
+
+	if flag.Lookup("d") == nil {
+		connectionStringFlag := flag.String("d", defaultConnectionStr, "адрес HTTP-сервера")
+
+		flag.Parse()
+
+		cfg.ConnectionStringSet(connectionStringFlag)
+	} else {
+		cfg.ConnectionStringSet(&cfg.ConnectionString)
+	}
+}
+
+func (cfg *DBConfig) ConnectionStringSet(connectionStringFlag *string) {
+	switch {
+	case os.Getenv("DATABASE_DSN") != "":
+		cfg.ConnectionString = os.Getenv("SERVER_ADDRESS")
+	case *connectionStringFlag != cfg.ConnectionString:
+		cfg.ConnectionString = *connectionStringFlag
+	}
 }
