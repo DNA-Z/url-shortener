@@ -12,7 +12,7 @@ import (
 )
 
 func DbConnect(ctx context.Context, cfg *db.DBConfig) (*sql.DB, error) {
-	strConn := cfg.GetConnectionString()
+	strConn := cfg.ConnectionString
 
 	db, err := sql.Open("pgx", strConn)
 	if err != nil {
