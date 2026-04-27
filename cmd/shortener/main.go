@@ -53,7 +53,8 @@ func getLogger() *zap.Logger {
 }
 
 func getDB() *sql.DB {
-	dbConfig := db.DBConfigInit()
+	dbConfig := db.NewDBConfig()
+	dbConfig.DBConfigInit()
 	ctx := context.Background()
 	database, err := infrastructure.DbConnect(ctx, dbConfig)
 	if err != nil {
