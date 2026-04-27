@@ -32,7 +32,7 @@ func (cfg *DBConfig) DBConfigInit() {
 func (cfg *DBConfig) ConnectionStringSet(connectionStringFlag *string) {
 	switch {
 	case os.Getenv("DATABASE_DSN") != "":
-		cfg.ConnectionString = os.Getenv("DATABASE_DSN")
+		cfg.ConnectionString = os.Getenv("DATABASE_CONN_STRING")
 	case *connectionStringFlag != cfg.ConnectionString:
 		cfg.ConnectionString = *connectionStringFlag
 	}
