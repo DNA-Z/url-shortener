@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/DNA-Z/url-shortener/internal/config"
-	"github.com/DNA-Z/url-shortener/internal/config/db"
 	"github.com/DNA-Z/url-shortener/internal/handler"
 	"github.com/DNA-Z/url-shortener/internal/infrastructure"
 	"github.com/DNA-Z/url-shortener/internal/middleware"
@@ -19,9 +18,9 @@ import (
 
 func main() {
 	logger := getLogger()
-	database := getDB()
 	configure := config.NewOptions()
 	configure.OptionsInit()
+	database := getDB(configure)
 	consumer, producer := getBroker(getLogger(), configure.FileStoragePath)
 
 	urlService := service.NewURL(consumer, producer)
@@ -52,11 +51,9 @@ func getLogger() *zap.Logger {
 	return logger
 }
 
-func getDB() *sql.DB {
-	dbConfig := db.NewDBConfig()
-	dbConfig.DBConfigInit()
+func getDB(cfg *config.Options) *sql.DB {
 	ctx := context.Background()
-	database, err := infrastructure.DbConnect(ctx, dbConfig)
+	database, err := infrastructure.DbConnect(ctx, cfg)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
