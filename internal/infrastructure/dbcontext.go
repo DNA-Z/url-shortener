@@ -7,11 +7,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/DNA-Z/url-shortener/internal/config/db"
+	"github.com/DNA-Z/url-shortener/internal/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func DbConnect(ctx context.Context, cfg *db.DBConfig) (*sql.DB, error) {
+func DbConnect(ctx context.Context, cfg *config.Options) (*sql.DB, error) {
 	strConn := cfg.ConnectionString
 
 	db, err := sql.Open("pgx", strConn)
