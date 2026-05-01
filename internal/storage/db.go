@@ -1,0 +1,101 @@
+package storage
+
+import (
+	"context"
+	"database/sql"
+	"embed"
+	"fmt"
+
+	"github.com/DNA-Z/url-shortener/internal/model"
+	_ "github.com/lib/pq"
+)
+
+//go:embed queries/*.sql
+var sqlFiles embed.FS
+
+type DBStorage struct {
+	db *sql.DB
+}
+
+func NewDBStorage(connectionString string) (*DBStorage, error) {
+	db, err := sql.Open("postgres", connectionString)
+	if err != nil {
+		return nil, fmt.Errorf("sql.Open failed: %w", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("db.Ping failed: %w", err)
+	}
+
+	query, err := sqlFiles.ReadFile("queries/create_table.sql")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read create_table.sql: %w", err)
+	}
+
+	_, err = db.ExecContext(context.Background(), string(query))
+	if err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to exec create_table.sql: %w", err)
+	}
+
+	return &DBStorage{db: db}, nil
+}
+
+func (d *DBStorage) Save(url *model.URLDto) error {
+	query, err := sqlFiles.ReadFile("queries/insert_url.sql")
+	if err != nil {
+		return err
+	}
+
+	_, err = d.db.ExecContext(context.Background(),
+		string(query),
+		url.UUID,
+		url.ShortURL,
+		url.OriginalURL,
+	)
+	return err
+}
+
+func (d *DBStorage) Get(shortURL string) (string, bool) {
+	query, err := sqlFiles.ReadFile("queries/get_original_url.sql")
+	if err != nil {
+		return "", false
+	}
+
+	var originalURL string
+	err = d.db.QueryRowContext(context.Background(), string(query), shortURL).Scan(&originalURL)
+	if err != nil {
+		return "", false
+	}
+
+	return originalURL, true
+}
+
+func (d *DBStorage) LoadAll() (map[string]string, error) {
+	query, err := sqlFiles.ReadFile("queries/load_all_urls.sql")
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := d.db.Query(string(query))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	data := make(map[string]string)
+	for rows.Next() {
+		var short, original string
+		if err := rows.Scan(&short, &original); err != nil {
+			return nil, err
+		}
+		data[short] = original
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}

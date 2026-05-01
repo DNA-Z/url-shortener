@@ -17,7 +17,7 @@ func NewOptions() *Options {
 		ServerAddress:    "localhost:8080",
 		BaseURL:          "http://localhost:8080/",
 		FileStoragePath:  "short_url",
-		ConnectionString: "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable",
+		ConnectionString: "host=localhost port=5432 user=postgres password=lightning dbname=short_url sslmode=disable", //"postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable",
 	}
 }
 
@@ -79,7 +79,7 @@ func (o *Options) PathToFile(fileStoragePath *string) {
 func (o *Options) ConnectionStringSet(connectionStringFlag *string) {
 	switch {
 	case os.Getenv("DATABASE_DSN") != "":
-		o.ConnectionString = os.Getenv("DATABASE_CONN_STRING")
+		o.ConnectionString = os.Getenv("DATABASE_DSN")
 	case *connectionStringFlag != o.ConnectionString:
 		o.ConnectionString = *connectionStringFlag
 	}

@@ -8,9 +8,9 @@ import (
 
 	"github.com/DNA-Z/url-shortener/internal/config"
 	"github.com/DNA-Z/url-shortener/internal/handler"
-	"github.com/DNA-Z/url-shortener/internal/infrastructure"
 	"github.com/DNA-Z/url-shortener/internal/middleware"
 	"github.com/DNA-Z/url-shortener/internal/service"
+	"github.com/DNA-Z/url-shortener/internal/storage"
 	"github.com/go-chi/chi/v5"
 
 	"go.uber.org/zap"
@@ -18,14 +18,13 @@ import (
 
 func main() {
 	logger := getLogger()
-	configure := config.NewOptions()
-	configure.OptionsInit()
-	database := getDB(configure)
-	consumer, producer := getBroker(getLogger(), configure.FileStoragePath)
+	cfg := config.NewOptions()
+	cfg.OptionsInit()
+	database := getDB(cfg)
+	urlService := getService(cfg)
 
-	urlService := service.NewURL(consumer, producer)
-	urlHandler := handler.NewURLHandler(urlService, configure.ServerAddress, configure.BaseURL)
-	pingHandler := handler.NewDBPingHandler(database, configure.ServerAddress, configure.BaseURL)
+	urlHandler := handler.NewURLHandler(urlService, cfg.ServerAddress, cfg.BaseURL)
+	pingHandler := handler.NewDBPingHandler(database, cfg.ServerAddress, cfg.BaseURL)
 
 	middleware.InitLogger(logger)
 
@@ -37,8 +36,8 @@ func main() {
 	r.Post("/", urlHandler.ShortenerPost)
 	r.Post("/api/shorten", urlHandler.ShortenURLPost)
 
-	log.Printf("Сервер запущен на %s\n", configure.ServerAddress)
-	log.Fatal(http.ListenAndServe(configure.ServerAddress, r))
+	log.Printf("Сервер запущен на %s\n", cfg.ServerAddress)
+	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
 }
 
 func getLogger() *zap.Logger {
@@ -53,7 +52,7 @@ func getLogger() *zap.Logger {
 
 func getDB(cfg *config.Options) *sql.DB {
 	ctx := context.Background()
-	database, err := infrastructure.DbConnect(ctx, cfg)
+	database, err := storage.DbConnect(ctx, cfg)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
@@ -61,15 +60,10 @@ func getDB(cfg *config.Options) *sql.DB {
 	return database
 }
 
-func getBroker(log *zap.Logger, fspath string) (*infrastructure.URLConsumer, *infrastructure.URLProducer) {
-	consumer, err := infrastructure.NewConsumer(fspath)
+func getService(cfg *config.Options) *service.URL {
+	urlService, err := service.NewURL(cfg)
 	if err != nil {
-		log.Fatal("Error creating consumer", zap.Error(err))
+		log.Fatal("Failed to initialize storage: ", err)
 	}
-	producer, err := infrastructure.NewURLProducer(fspath)
-	if err != nil {
-		log.Fatal("Error creating producer", zap.Error(err))
-	}
-
-	return consumer, producer
+	return urlService
 }

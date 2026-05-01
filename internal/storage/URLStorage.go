@@ -1,0 +1,11 @@
+package storage
+
+import (
+	"github.com/DNA-Z/url-shortener/internal/model"
+)
+
+type URLStorage interface {
+	Save(url *model.URLDto) error
+	Get(shortURL string) (string, bool)
+	LoadAll() (map[string]string, error)
+}

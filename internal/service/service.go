@@ -3,78 +3,77 @@ package service
 import (
 	"fmt"
 
-	"github.com/DNA-Z/url-shortener/internal/infrastructure"
+	"github.com/DNA-Z/url-shortener/internal/config"
 	"github.com/DNA-Z/url-shortener/internal/model"
+	"github.com/DNA-Z/url-shortener/internal/storage"
 )
 
 type URL struct {
-	consumer *infrastructure.URLConsumer
-	producer *infrastructure.URLProducer
-	URLs     map[string]string
+	storage storage.URLStorage
 }
 
-func NewURL(consumer *infrastructure.URLConsumer, producer *infrastructure.URLProducer) *URL {
-	urlService := &URL{
-		consumer: consumer,
-		producer: producer,
-		URLs:     make(map[string]string),
+func NewURL(cfg *config.Options) (*URL, error) {
+	var store storage.URLStorage
+	var err error
+
+	if cfg.ConnectionString != "" {
+		store, err = storage.NewDBStorage(cfg.ConnectionString)
+		if err == nil {
+			fmt.Println("Using database storage")
+			return newURLService(store)
+		}
+		fmt.Printf("Failed to connect to DB: %v\n", err)
 	}
 
-	urlService.loadAllURLToMap()
+	if cfg.FileStoragePath != "" {
+		store, err = storage.NewFileStorage(cfg.FileStoragePath)
+		if err == nil {
+			fmt.Println("Using file storage")
+			return newURLService(store)
+		}
+		fmt.Printf("Failed to open file storage: %v\n", err)
+	}
 
-	return urlService
+	store = storage.NewMemoryStorage()
+	fmt.Println("Using in-memory storage")
+	return newURLService(store)
 }
 
-func (u *URL) Shorten(url string) (string, error) {
+func (u *URL) Shorten(originalURL string) (string, error) {
 
-	isURLExist, id := u.urlExists(url)
-
-	if isURLExist {
-		return id, nil
-	}
-
-	newURL := model.NewShortURL(url)
-
-	file, err := model.NewURLFile(newURL.URLID, newURL.LongURL)
+	data, err := u.storage.LoadAll()
 	if err != nil {
 		return "", err
 	}
 
-	err = u.producer.WriteURL(file)
-	if err != nil {
-		return "", err
-	}
-
-	u.URLs[newURL.URLID] = newURL.LongURL
-
-	return newURL.URLID, nil
-}
-
-func (u *URL) GetByID(urlID string) (string, error) {
-	foundURL, ok := u.URLs[urlID]
-	if !ok {
-		return "", fmt.Errorf("URL %v not found", urlID)
-	}
-
-	return foundURL, nil
-}
-
-func (u *URL) loadAllURLToMap() {
-	files, err := u.consumer.ReadURL()
-	if err != nil {
-		return
-	}
-
-	for _, url := range files {
-		u.URLs[url.ShortURL] = url.OriginalURL
-	}
-}
-
-func (u *URL) urlExists(url string) (bool, string) {
-	for key, value := range u.URLs {
-		if value == url {
-			return true, key
+	for short, long := range data {
+		if long == originalURL {
+			return short, nil
 		}
 	}
-	return false, ""
+
+	newURL := model.NewShortURL(originalURL)
+
+	if err := u.storage.Save(newURL); err != nil {
+		return "", err
+	}
+	return newURL.ShortURL, nil
+}
+
+func (u *URL) GetByID(shortURL string) (string, error) {
+	if url, ok := u.storage.Get(shortURL); ok {
+		return url, nil
+	}
+
+	return "", fmt.Errorf("URL not found")
+}
+
+func newURLService(store storage.URLStorage) (*URL, error) {
+	urlService := &URL{storage: store}
+
+	if data, err := store.LoadAll(); err == nil {
+		_ = data
+	}
+
+	return urlService, nil
 }
