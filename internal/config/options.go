@@ -17,7 +17,7 @@ func NewOptions() *Options {
 		ServerAddress:    "localhost:8080",
 		BaseURL:          "http://localhost:8080/",
 		FileStoragePath:  "short_url",
-		ConnectionString: "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable",
+		ConnectionString: "",
 	}
 }
 

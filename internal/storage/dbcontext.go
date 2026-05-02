@@ -7,14 +7,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/DNA-Z/url-shortener/internal/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func DbConnect(ctx context.Context, cfg *config.Options) (*sql.DB, error) {
-	strConn := cfg.ConnectionString
+func DbConnect(ctx context.Context, connectionString string) (*sql.DB, error) {
 
-	db, err := sql.Open("pgx", strConn)
+	db, err := sql.Open("pgx", connectionString)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}

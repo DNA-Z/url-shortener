@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"database/sql"
 	"log"
 	"net/http"
 
@@ -10,7 +8,6 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/handler"
 	"github.com/DNA-Z/url-shortener/internal/middleware"
 	"github.com/DNA-Z/url-shortener/internal/service"
-	"github.com/DNA-Z/url-shortener/internal/storage"
 	"github.com/go-chi/chi/v5"
 
 	"go.uber.org/zap"
@@ -20,11 +17,10 @@ func main() {
 	logger := getLogger()
 	cfg := config.NewOptions()
 	cfg.OptionsInit()
-	database := getDB(cfg)
 	urlService := getService(cfg)
 
 	urlHandler := handler.NewURLHandler(urlService, cfg.ServerAddress, cfg.BaseURL)
-	pingHandler := handler.NewDBPingHandler(database, cfg.ServerAddress, cfg.BaseURL)
+	pingHandler := handler.NewDBPingHandler(cfg)
 
 	middleware.InitLogger(logger)
 
@@ -48,16 +44,6 @@ func getLogger() *zap.Logger {
 	defer logger.Sync()
 
 	return logger
-}
-
-func getDB(cfg *config.Options) *sql.DB {
-	ctx := context.Background()
-	database, err := storage.DbConnect(ctx, cfg)
-	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
-	}
-
-	return database
 }
 
 func getService(cfg *config.Options) *service.URL {
