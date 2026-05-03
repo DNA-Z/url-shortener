@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"log"
 	"net/http"
+	"strings"
 )
 
 func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
@@ -9,6 +11,11 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)
 		return
 	}
+	var baseAddress = h.baseURL
+	if !strings.HasSuffix(baseAddress, "/") {
+		baseAddress += "/"
+	}
+	log.Fatalf("base address: %v", baseAddress)
 
 	id := req.PathValue("id")
 
