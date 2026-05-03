@@ -65,7 +65,8 @@ func (u *URL) Shorten(originalURL string) (string, error) {
 func (u *URL) GetByID(shortURL string) (string, error) {
 	url, err := u.storage.Get(shortURL)
 	if err != nil {
-		return "", fmt.Errorf("URL not found")
+		log.Printf("Get URL failed for ID=%s: %v", url, err)
+		return "", err
 	}
 
 	log.Printf("Result URL: %v", url)
