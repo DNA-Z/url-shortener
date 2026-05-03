@@ -20,7 +20,7 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 	result, err := h.urlService.GetByID(id)
 
 	if err != nil {
-		http.Error(res, "URL not found", http.StatusBadRequest)
+		http.Error(res, "URL not found", http.StatusNotFound)
 		return
 	}
 
