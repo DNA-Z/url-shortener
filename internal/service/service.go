@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/DNA-Z/url-shortener/internal/config"
@@ -21,23 +20,23 @@ func NewURL(cfg *config.Options) (*URL, error) {
 	if cfg.ConnectionString != "" {
 		store, err = storage.NewDBStorage(cfg.ConnectionString)
 		if err == nil {
-			fmt.Println("Using database storage")
+			log.Printf("Using database storage")
 			return newURLService(store)
 		}
-		fmt.Printf("Failed to connect to DB: %v\n", err)
+		log.Printf("Failed to connect to DB: %v\n", err)
 	}
 
 	if cfg.FileStoragePath != "" {
 		store, err = storage.NewFileStorage(cfg.FileStoragePath)
 		if err == nil {
-			fmt.Println("Using file storage")
+			log.Println("Using file storage")
 			return newURLService(store)
 		}
-		fmt.Printf("Failed to open file storage: %v\n", err)
+		log.Printf("Failed to open file storage: %v\n", err)
 	}
 
 	store = storage.NewMemoryStorage()
-	fmt.Println("Using in-memory storage")
+	log.Println("Using in-memory storage")
 	return newURLService(store)
 }
 

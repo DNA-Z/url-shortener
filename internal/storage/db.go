@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"log"
 
 	"github.com/DNA-Z/url-shortener/internal/model"
 	_ "github.com/lib/pq"
@@ -45,11 +46,13 @@ func NewDBStorage(connectionString string) (*DBStorage, error) {
 func (d *DBStorage) Save(url *model.URLDto) error {
 	query, err := sqlFiles.ReadFile("queries/insert_url.sql")
 	if err != nil {
+		log.Printf("failed to read insert_url.sql: %v", err)
 		return err
 	}
 
 	stmt, err := d.db.PrepareContext(context.Background(), string(query))
 	if err != nil {
+		log.Printf("failed to save() prepare statement: %v", err)
 		return err
 	}
 	defer stmt.Close()
@@ -59,17 +62,23 @@ func (d *DBStorage) Save(url *model.URLDto) error {
 		url.ShortURL,
 		url.OriginalURL,
 	)
+	if err != nil {
+		log.Printf("failed to save() execute statement: %v", err)
+		return err
+	}
 	return err
 }
 
 func (d *DBStorage) Saves(urls []model.URLDto) error {
 	tx, err := d.db.Begin()
 	if err != nil {
+		log.Printf("failed to begin transaction: %v", err)
 		return err
 	}
 	for i := range urls {
 		err := d.Save(&urls[i])
 		if err != nil {
+			log.Printf("failed to saves() url: %v", err)
 			tx.Rollback()
 			return err
 		}
@@ -81,6 +90,7 @@ func (d *DBStorage) Saves(urls []model.URLDto) error {
 func (d *DBStorage) Get(shortURL string) (string, error) {
 	query, err := sqlFiles.ReadFile("queries/get_original_url.sql")
 	if err != nil {
+		log.Printf("failed to read get_original_url.sql: %v", err)
 		return "", err
 	}
 
@@ -88,12 +98,14 @@ func (d *DBStorage) Get(shortURL string) (string, error) {
 
 	stmt, err := d.db.PrepareContext(context.Background(), string(query))
 	if err != nil {
+		log.Printf("failed to get() prepare statement: %v", err)
 		return "", err
 	}
 	defer stmt.Close()
 
 	err = stmt.QueryRowContext(context.Background(), shortURL).Scan(&originalURL)
 	if err != nil {
+		log.Printf("failed to get() execute statement: %v", err)
 		return "", err
 	}
 
@@ -103,17 +115,20 @@ func (d *DBStorage) Get(shortURL string) (string, error) {
 func (d *DBStorage) LoadAll() (map[string]string, error) {
 	query, err := sqlFiles.ReadFile("queries/load_all_urls.sql")
 	if err != nil {
+		log.Printf("failed to read load_all_urls.sql: %v", err)
 		return nil, err
 	}
 
 	stmt, err := d.db.PrepareContext(context.Background(), string(query))
 	if err != nil {
+		log.Printf("failed to load() prepare statement: %v", err)
 		return nil, err
 	}
 	defer stmt.Close()
 
 	rows, err := stmt.Query()
 	if err != nil {
+		log.Printf("failed to load() execute statement: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -122,12 +137,14 @@ func (d *DBStorage) LoadAll() (map[string]string, error) {
 	for rows.Next() {
 		var short, original string
 		if err := rows.Scan(&short, &original); err != nil {
+			log.Printf("failed to load() scan: %v", err)
 			return nil, err
 		}
 		data[short] = original
 	}
 
 	if err = rows.Err(); err != nil {
+		log.Printf("failed to load() rows: %v", err)
 		return nil, err
 	}
 
