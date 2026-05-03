@@ -78,26 +78,26 @@ func (d *DBStorage) Saves(urls []model.URLDto) error {
 	return tx.Commit()
 }
 
-func (d *DBStorage) Get(shortURL string) (string, bool) {
+func (d *DBStorage) Get(shortURL string) (string, error) {
 	query, err := sqlFiles.ReadFile("queries/get_original_url.sql")
 	if err != nil {
-		return "", false
+		return "", err
 	}
 
 	var originalURL string
 
 	stmt, err := d.db.PrepareContext(context.Background(), string(query))
 	if err != nil {
-		return "", false
+		return "", err
 	}
 	defer stmt.Close()
 
 	err = stmt.QueryRowContext(context.Background(), shortURL).Scan(&originalURL)
 	if err != nil {
-		return "", false
+		return "", err
 	}
 
-	return originalURL, true
+	return originalURL, nil
 }
 
 func (d *DBStorage) LoadAll() (map[string]string, error) {

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/DNA-Z/url-shortener/internal/model"
@@ -35,11 +36,14 @@ func (m *MemoryStorage) Saves(urls []model.URLDto) error {
 	return nil
 }
 
-func (m *MemoryStorage) Get(shortURL string) (string, bool) {
+func (m *MemoryStorage) Get(shortURL string) (string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	url, exists := m.data[shortURL]
-	return url, exists
+	if exists {
+		return "", fmt.Errorf("URL not found for short URL: %s", shortURL)
+	}
+	return url, nil
 }
 
 func (m *MemoryStorage) LoadAll() (map[string]string, error) {

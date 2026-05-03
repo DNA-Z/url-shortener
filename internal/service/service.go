@@ -63,12 +63,13 @@ func (u *URL) Shorten(originalURL string) (string, error) {
 }
 
 func (u *URL) GetByID(shortURL string) (string, error) {
-	if url, ok := u.storage.Get(shortURL); ok {
-		log.Printf("Result URL: %v", url)
-		return url, nil
+	url, err := u.storage.Get(shortURL)
+	if err != nil {
+		return "", fmt.Errorf("URL not found")
 	}
 
-	return "", fmt.Errorf("URL not found")
+	log.Printf("Result URL: %v", url)
+	return url, nil
 }
 
 func (u *URL) Batch(request []dto.BatchRequestDto) (response []dto.BatchResponseDto, err error) {

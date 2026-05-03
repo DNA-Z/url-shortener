@@ -7,6 +7,6 @@ import (
 type URLStorage interface {
 	Save(url *model.URLDto) error
 	Saves(urls []model.URLDto) error
-	Get(shortURL string) (string, bool)
+	Get(shortURL string) (string, error)
 	LoadAll() (map[string]string, error)
 }

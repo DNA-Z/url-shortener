@@ -3,6 +3,7 @@ package storage
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
 	"sync"
 
@@ -108,11 +109,14 @@ func (f *FileStorage) Saves(urls []model.URLDto) error {
 	return f.writer.Flush()
 }
 
-func (f *FileStorage) Get(shortURL string) (string, bool) {
+func (f *FileStorage) Get(shortURL string) (string, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 	url, exists := f.data[shortURL]
-	return url, exists
+	if exists {
+		return "", fmt.Errorf("URL not found for short URL: %s", shortURL)
+	}
+	return url, nil
 }
 
 func (f *FileStorage) LoadAll() (map[string]string, error) {
