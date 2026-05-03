@@ -11,9 +11,7 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/storage"
 )
 
-var defaultConnnectionStr = "host=localhost port=5432 user=postgres password=lightning dbname=short_url sslmode=disable"
-
-// "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable"
+var defaultConnnectionStr = "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable"
 
 type DBPingHandler struct {
 	dbConnectionString string
