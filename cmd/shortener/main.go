@@ -31,6 +31,7 @@ func main() {
 	r.Get("/{id}", urlHandler.GetByIDGet)
 	r.Post("/", urlHandler.ShortenerPost)
 	r.Post("/api/shorten", urlHandler.ShortenURLPost)
+	r.Post("/api/shorten/batch", urlHandler.ShortenBatchPost)
 
 	log.Printf("Сервер запущен на %s\n", cfg.ServerAddress)
 	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
