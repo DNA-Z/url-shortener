@@ -15,7 +15,7 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 	if !strings.HasSuffix(baseAddress, "/") {
 		baseAddress += "/"
 	}
-	log.Fatalf("base address: %v", baseAddress)
+	log.Printf("base address: %v", baseAddress)
 
 	id := req.PathValue("id")
 	log.Printf("found short URL: %v", id)
