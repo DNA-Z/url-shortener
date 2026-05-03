@@ -24,6 +24,5 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	res.Header().Set("Location", result)
-	res.WriteHeader(http.StatusTemporaryRedirect)
+	http.Redirect(res, req, result, http.StatusTemporaryRedirect)
 }
