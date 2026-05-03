@@ -48,13 +48,34 @@ func (d *DBStorage) Save(url *model.URLDto) error {
 		return err
 	}
 
-	_, err = d.db.ExecContext(context.Background(),
-		string(query),
+	stmt, err := d.db.PrepareContext(context.Background(), string(query))
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(
 		url.UUID,
 		url.ShortURL,
 		url.OriginalURL,
 	)
 	return err
+}
+
+func (d *DBStorage) Saves(urls []model.URLDto) error {
+	tx, err := d.db.Begin()
+	if err != nil {
+		return err
+	}
+	for i := range urls {
+		err := d.Save(&urls[i])
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (d *DBStorage) Get(shortURL string) (string, bool) {
@@ -64,7 +85,14 @@ func (d *DBStorage) Get(shortURL string) (string, bool) {
 	}
 
 	var originalURL string
-	err = d.db.QueryRowContext(context.Background(), string(query), shortURL).Scan(&originalURL)
+
+	stmt, err := d.db.PrepareContext(context.Background(), string(query))
+	if err != nil {
+		return "", false
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(context.Background(), shortURL).Scan(&originalURL)
 	if err != nil {
 		return "", false
 	}
@@ -78,7 +106,13 @@ func (d *DBStorage) LoadAll() (map[string]string, error) {
 		return nil, err
 	}
 
-	rows, err := d.db.Query(string(query))
+	stmt, err := d.db.PrepareContext(context.Background(), string(query))
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
 	if err != nil {
 		return nil, err
 	}

@@ -24,6 +24,17 @@ func (m *MemoryStorage) Save(url *model.URLDto) error {
 	return nil
 }
 
+func (m *MemoryStorage) Saves(urls []model.URLDto) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for _, url := range urls {
+		m.data[url.ShortURL] = url.OriginalURL
+	}
+
+	return nil
+}
+
 func (m *MemoryStorage) Get(shortURL string) (string, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

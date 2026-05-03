@@ -2,8 +2,10 @@ package service
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/DNA-Z/url-shortener/internal/config"
+	"github.com/DNA-Z/url-shortener/internal/dto"
 	"github.com/DNA-Z/url-shortener/internal/model"
 	"github.com/DNA-Z/url-shortener/internal/storage"
 )
@@ -66,6 +68,24 @@ func (u *URL) GetByID(shortURL string) (string, error) {
 	}
 
 	return "", fmt.Errorf("URL not found")
+}
+
+func (u *URL) Batch(request []dto.BatchRequestDto) (response []dto.BatchResponseDto, err error) {
+	response = make([]dto.BatchResponseDto, 0, len(request))
+
+	for _, req := range request {
+		shortURL, err := u.Shorten(req.OriginalURL)
+		if err != nil {
+			log.Printf("Failed to shorten URL for ID=%s, OriginalURL=%s: %v", req.ID, req.OriginalURL, err)
+			continue
+		}
+		response = append(response, dto.BatchResponseDto{
+			ID:       req.ID,
+			ShortURL: shortURL,
+		})
+	}
+
+	return response, err
 }
 
 func newURLService(store storage.URLStorage) (*URL, error) {

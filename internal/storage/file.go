@@ -83,6 +83,31 @@ func (f *FileStorage) Save(url *model.URLDto) error {
 	return nil
 }
 
+func (f *FileStorage) Saves(urls []model.URLDto) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	for _, url := range urls {
+		data, err := json.Marshal(url)
+		if err != nil {
+			return err
+		}
+
+		_, err = f.writer.Write(data)
+		if err != nil {
+			return err
+		}
+
+		err = f.writer.WriteByte('n')
+		if err != nil {
+			return err
+		}
+
+		f.data[url.ShortURL] = url.OriginalURL
+	}
+	return f.writer.Flush()
+}
+
 func (f *FileStorage) Get(shortURL string) (string, bool) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
