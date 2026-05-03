@@ -77,6 +77,9 @@ func (u *URL) Batch(request []dto.BatchRequestDto) (response []dto.BatchResponse
 
 	for _, req := range request {
 		shortURL, err := u.Shorten(req.OriginalURL)
+
+		log.Printf("shortened from '%+q' -> '%+q'\n", req.OriginalURL, shortURL)
+
 		if err != nil {
 			log.Printf("Failed to shorten URL for ID=%s, OriginalURL=%s: %v", req.ID, req.OriginalURL, err)
 			continue
@@ -85,6 +88,8 @@ func (u *URL) Batch(request []dto.BatchRequestDto) (response []dto.BatchResponse
 			ID:       req.ID,
 			ShortURL: shortURL,
 		})
+
+		log.Printf("Shortened URL for ID=%s, OriginalURL=%s", req.ID, req.OriginalURL)
 	}
 
 	return response, err
