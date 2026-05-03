@@ -62,6 +62,8 @@ func (u *URL) Shorten(originalURL string) (string, error) {
 }
 
 func (u *URL) GetByID(shortURL string) (string, error) {
+	log.Printf("Get by id called with param='%s'", shortURL)
+
 	url, err := u.storage.Get(shortURL)
 	if err != nil {
 		log.Printf("Get URL failed for ID=%s: %v", url, err)
@@ -88,8 +90,6 @@ func (u *URL) Batch(request []dto.BatchRequestDto) (response []dto.BatchResponse
 			ID:       req.ID,
 			ShortURL: shortURL,
 		})
-
-		log.Printf("Shortened URL for ID=%s, OriginalURL=%s", req.ID, req.OriginalURL)
 	}
 
 	return response, err

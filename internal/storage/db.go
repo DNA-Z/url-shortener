@@ -109,6 +109,7 @@ func (d *DBStorage) Get(shortURL string) (string, error) {
 		return "", err
 	}
 
+	log.Printf("originalURL: %s", originalURL)
 	return originalURL, nil
 }
 
