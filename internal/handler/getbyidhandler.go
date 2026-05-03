@@ -18,6 +18,7 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 	log.Fatalf("base address: %v", baseAddress)
 
 	id := req.PathValue("id")
+	log.Printf("found short URL: %v", id)
 
 	if id == "" {
 		http.Error(res, "ID not provided", http.StatusBadRequest)
