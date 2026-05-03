@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 )
 
 func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
@@ -21,6 +22,11 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		http.Error(res, "URL not found", http.StatusNotFound)
+		return
+	}
+
+	if !strings.HasPrefix(result, "http://") && !strings.HasPrefix(result, "https://") {
+		http.Error(res, "Invalid redirect URL: missing scheme", http.StatusInternalServerError)
 		return
 	}
 
