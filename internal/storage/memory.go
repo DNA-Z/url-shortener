@@ -40,7 +40,7 @@ func (m *MemoryStorage) Get(shortURL string) (string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	url, exists := m.data[shortURL]
-	if exists {
+	if exists == false {
 		return "", fmt.Errorf("URL not found for short URL: %s", shortURL)
 	}
 	return url, nil

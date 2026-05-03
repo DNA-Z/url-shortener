@@ -113,7 +113,7 @@ func (f *FileStorage) Get(shortURL string) (string, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 	url, exists := f.data[shortURL]
-	if exists {
+	if exists == false {
 		return "", fmt.Errorf("URL not found for short URL: %s", shortURL)
 	}
 	return url, nil
