@@ -66,7 +66,9 @@ func (d *DBStorage) Save(url *model.URLDto) error {
 		log.Printf("failed to save() execute statement: %v", err)
 		return err
 	}
-	return err
+
+	log.Printf("saved url: %s, original URL: %s is successfully", url.ShortURL, url.OriginalURL)
+	return nil
 }
 
 func (d *DBStorage) Saves(urls []model.URLDto) error {
