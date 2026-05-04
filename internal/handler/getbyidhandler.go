@@ -8,10 +8,16 @@ import (
 
 func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 	log.Printf("Get URL: %v by baseURL: %v", req.URL, h.baseURL)
+
 	if req.Method != http.MethodGet {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)
 		return
 	}
+
+	if h.normalizeAndRedirectIfNeeded(res, req) {
+		return
+	}
+
 	var baseAddress = h.baseURL
 	if !strings.HasSuffix(baseAddress, "/") {
 		baseAddress += "/"
@@ -35,4 +41,24 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 
 	res.Header().Set("Location", result)
 	res.WriteHeader(http.StatusTemporaryRedirect)
+}
+
+func (h *URLHandler) normalizeAndRedirectIfNeeded(res http.ResponseWriter, req *http.Request) bool {
+	path := req.URL.Path
+	id := req.PathValue("id")
+
+	if id == "" || strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
+		return false
+	}
+
+	if !strings.Contains(path, "://") {
+		fullURL := "http://localhost:8080" + path
+		log.Printf("Normalizing URL: %s -> %s", path, fullURL)
+
+		res.Header().Set("Location", fullURL)
+		res.WriteHeader(http.StatusTemporaryRedirect)
+		return true
+	}
+
+	return false
 }
