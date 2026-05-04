@@ -26,7 +26,7 @@ func (h *URLHandler) ShortenBatchPost(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	response, err := h.urlService.Batch(request)
+	response, err := h.urlService.Batch(request, baseAddress)
 	if err != nil {
 		http.Error(res, "Batch processing failed", http.StatusInternalServerError)
 		return

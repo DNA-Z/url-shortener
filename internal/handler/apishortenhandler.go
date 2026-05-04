@@ -2,10 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/DNA-Z/url-shortener/internal/dto"
+	cerrors "github.com/DNA-Z/url-shortener/internal/errors"
 )
 
 func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, req *http.Request) {
@@ -30,17 +33,24 @@ func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "URL in JSON is empty", http.StatusBadRequest)
 		return
 	}
+	httpStatus := http.StatusCreated
 
 	shortUrl, err := h.urlService.Shorten(request.URL)
-	if err != nil {
+
+	var conflictErr *cerrors.ConflictError
+	if err != nil && !errors.As(err, &conflictErr) {
 		http.Error(w, "URL shorten error", http.StatusBadRequest)
 		return
+	}
+	if errors.As(err, &conflictErr) {
+		httpStatus = http.StatusConflict
+		fmt.Println("Status:", conflictErr.Status)
 	}
 
 	response.ShortURL = baseAddress + shortUrl
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(httpStatus)
 
 	enc := json.NewEncoder(w)
 	if err := enc.Encode(response); err != nil {

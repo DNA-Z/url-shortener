@@ -2,9 +2,11 @@ package service
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/DNA-Z/url-shortener/internal/config"
 	"github.com/DNA-Z/url-shortener/internal/dto"
+	"github.com/DNA-Z/url-shortener/internal/errors"
 	"github.com/DNA-Z/url-shortener/internal/model"
 	"github.com/DNA-Z/url-shortener/internal/storage"
 )
@@ -49,7 +51,10 @@ func (u *URL) Shorten(originalURL string) (string, error) {
 
 	for short, long := range data {
 		if long == originalURL {
-			return short, nil
+			return short, &errors.ConflictError{
+				Status: http.StatusConflict,
+				URL:    originalURL,
+			}
 		}
 	}
 
@@ -74,7 +79,7 @@ func (u *URL) GetByID(shortURL string) (string, error) {
 	return url, nil
 }
 
-func (u *URL) Batch(request []dto.BatchRequestDto) (response []dto.BatchResponseDto, err error) {
+func (u *URL) Batch(request []dto.BatchRequestDto, baseAddress string) (response []dto.BatchResponseDto, err error) {
 	response = make([]dto.BatchResponseDto, 0, len(request))
 
 	for _, req := range request {
@@ -88,7 +93,7 @@ func (u *URL) Batch(request []dto.BatchRequestDto) (response []dto.BatchResponse
 		}
 		response = append(response, dto.BatchResponseDto{
 			ID:       req.ID,
-			ShortURL: "http://localhost:8080/" + shortURL,
+			ShortURL: baseAddress + shortURL,
 		})
 	}
 

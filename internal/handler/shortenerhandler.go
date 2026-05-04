@@ -1,9 +1,13 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
+
+	cerrors "github.com/DNA-Z/url-shortener/internal/errors"
 )
 
 func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
@@ -34,12 +38,19 @@ func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 	}
 
 	shortURL, err := h.urlService.Shorten(url)
-	if err != nil {
+
+	httpStatus := http.StatusCreated
+	var conflictErr *cerrors.ConflictError
+	if err != nil && !errors.As(err, &conflictErr) {
 		http.Error(res, "Error shortening URL: "+err.Error(), http.StatusBadRequest)
+	}
+	if errors.As(err, &conflictErr) {
+		httpStatus = http.StatusConflict
+		fmt.Println("Status:", conflictErr.Status)
 	}
 
 	result := baseAddress + shortURL
 
-	res.WriteHeader(http.StatusCreated)
+	res.WriteHeader(httpStatus)
 	res.Write([]byte(result))
 }
