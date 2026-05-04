@@ -14,12 +14,9 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	baseAddress := h.normalizeAndValidateRequest(res, req)
-	if baseAddress == "" {
-		return
-	}
-
-	log.Printf("base address: %v", baseAddress)
+	normalizeRequestURL(req)
+	log.Printf("Normalized URL: scheme=%s host=%s path=%s",
+		req.URL.Scheme, req.URL.Host, req.URL.Path)
 
 	id := req.PathValue("id")
 	log.Printf("found short URL: %v", id)
@@ -40,23 +37,20 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (h *URLHandler) normalizeAndValidateRequest(res http.ResponseWriter, req *http.Request) string {
-	baseAddress := h.baseURL
-	if !strings.HasSuffix(baseAddress, "/") {
-		baseAddress += "/"
+func normalizeRequestURL(req *http.Request) {
+	if req.URL.Scheme == "" {
+		req.URL.Scheme = "http"
 	}
 
-	path := req.URL.Path
-	id := req.PathValue("id")
-
-	if id != "" && !strings.Contains(path, "://") {
-		fullURL := "http://localhost:8080" + path
-		log.Printf("Missing scheme. Redirecting: %s -> %s", path, fullURL)
-
-		res.Header().Set("Location", fullURL)
-		res.WriteHeader(http.StatusTemporaryRedirect)
-		return ""
+	if req.URL.Host == "" {
+		req.URL.Host = "localhost:8080"
 	}
 
-	return baseAddress
+	if req.URL.Path == "" || !strings.HasPrefix(req.URL.Path, "/") {
+		if req.URL.Path != "" {
+			req.URL.Path = "/" + req.URL.Path
+		} else {
+			req.URL.Path = "/"
+		}
+	}
 }
