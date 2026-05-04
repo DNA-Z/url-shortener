@@ -7,7 +7,6 @@ import (
 )
 
 func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
-	log.Printf("Get URL: %v by baseURL: %v", req.URL, h.baseURL)
 	if req.Method != http.MethodGet {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)
 		return
@@ -16,16 +15,10 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 	id := req.PathValue("id")
 	log.Printf("found short URL: %v", id)
 
-	//if !strings.HasPrefix(baseAddress, "http://") {
-	//	baseAddress += "http://"
-	//}
-	if !strings.Contains(h.baseURL, "http://localhost:8080") {
-		h.baseURL += "http://localhost:8080"
+	var baseAddress = h.baseURL
+	if !strings.HasSuffix(baseAddress, "/") {
+		baseAddress += "/"
 	}
-	if !strings.HasSuffix(h.baseURL, "/") {
-		h.baseURL += "/"
-	}
-
 	log.Printf("base address: %v", h.baseURL)
 
 	if id == "" {

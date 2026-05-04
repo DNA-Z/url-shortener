@@ -88,7 +88,7 @@ func (u *URL) Batch(request []dto.BatchRequestDto) (response []dto.BatchResponse
 		}
 		response = append(response, dto.BatchResponseDto{
 			ID:       req.ID,
-			ShortURL: shortURL,
+			ShortURL: "http://localhost:8080" + shortURL,
 		})
 	}
 

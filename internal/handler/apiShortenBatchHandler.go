@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -29,6 +30,10 @@ func (h *URLHandler) ShortenBatchPost(res http.ResponseWriter, req *http.Request
 	if err != nil {
 		http.Error(res, "Batch processing failed", http.StatusInternalServerError)
 		return
+	}
+
+	for i := range response {
+		log.Printf("Batch processing response short URL: %v", response[i].ShortURL)
 	}
 
 	res.Header().Set("Content-Type", "application/json")
