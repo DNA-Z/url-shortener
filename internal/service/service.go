@@ -13,17 +13,20 @@ import (
 
 type URL struct {
 	storage storage.URLStorage
+	isDB    bool
 }
 
 func NewURL(cfg *config.Options) (*URL, error) {
 	var store storage.URLStorage
 	var err error
+	isDB := false
 
 	if cfg.ConnectionString != "" {
 		store, err = storage.NewDBStorage(cfg.ConnectionString)
 		if err == nil {
 			log.Printf("Using database storage")
-			return newURLService(store)
+			isDB = true
+			return newURLService(store, isDB)
 		}
 		log.Printf("Failed to connect to DB: %v\n", err)
 	}
@@ -32,14 +35,14 @@ func NewURL(cfg *config.Options) (*URL, error) {
 		store, err = storage.NewFileStorage(cfg.FileStoragePath)
 		if err == nil {
 			log.Println("Using file storage")
-			return newURLService(store)
+			return newURLService(store, isDB)
 		}
 		log.Printf("Failed to open file storage: %v\n", err)
 	}
 
 	store = storage.NewMemoryStorage()
 	log.Println("Using in-memory storage")
-	return newURLService(store)
+	return newURLService(store, isDB)
 }
 
 func (u *URL) Shorten(originalURL string) (string, error) {
@@ -51,10 +54,13 @@ func (u *URL) Shorten(originalURL string) (string, error) {
 
 	for short, long := range data {
 		if long == originalURL {
-			return short, &errors.ConflictError{
-				Status: http.StatusConflict,
-				URL:    originalURL,
+			if u.isDB {
+				return short, &errors.ConflictError{
+					Status: http.StatusConflict,
+					URL:    originalURL,
+				}
 			}
+			return short, nil
 		}
 	}
 
@@ -100,8 +106,8 @@ func (u *URL) Batch(request []dto.BatchRequestDto, baseAddress string) (response
 	return response, err
 }
 
-func newURLService(store storage.URLStorage) (*URL, error) {
-	urlService := &URL{storage: store}
+func newURLService(store storage.URLStorage, isDB bool) (*URL, error) {
+	urlService := &URL{storage: store, isDB: isDB}
 
 	if data, err := store.LoadAll(); err == nil {
 		_ = data
