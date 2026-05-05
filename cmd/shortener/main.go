@@ -15,6 +15,8 @@ import (
 
 func main() {
 	logger := getLogger()
+	defer logger.Sync()
+
 	cfg := config.NewOptions()
 	cfg.OptionsInit()
 	urlService := getService(cfg)
@@ -42,7 +44,6 @@ func getLogger() *zap.Logger {
 	if err != nil {
 		panic(err)
 	}
-	defer logger.Sync()
 
 	return logger
 }
