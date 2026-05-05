@@ -43,52 +43,6 @@ func NewDBStorage(connectionString string) (*DBStorage, error) {
 	return &DBStorage{db: db}, nil
 }
 
-func (d *DBStorage) Save(url *model.URLDto) error {
-	query, err := sqlFiles.ReadFile("queries/insert_url.sql")
-	if err != nil {
-		log.Printf("failed to read insert_url.sql: %v", err)
-		return err
-	}
-
-	stmt, err := d.db.PrepareContext(context.Background(), string(query))
-	if err != nil {
-		log.Printf("failed to save() prepare statement: %v", err)
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(
-		url.UUID,
-		url.ShortURL,
-		url.OriginalURL,
-	)
-	if err != nil {
-		log.Printf("failed to save() execute statement: %v", err)
-		return err
-	}
-
-	log.Printf("saved url: %s, original URL: %s is successfully", url.ShortURL, url.OriginalURL)
-	return nil
-}
-
-func (d *DBStorage) Saves(urls []model.URLDto) error {
-	tx, err := d.db.Begin()
-	if err != nil {
-		log.Printf("failed to begin transaction: %v", err)
-		return err
-	}
-	for i := range urls {
-		err := d.Save(&urls[i])
-		if err != nil {
-			log.Printf("failed to saves() url: %v", err)
-			tx.Rollback()
-			return err
-		}
-	}
-
-	return tx.Commit()
-}
-
 func (d *DBStorage) Get(shortURL string) (string, error) {
 	query, err := sqlFiles.ReadFile("queries/get_original_url.sql")
 	if err != nil {
@@ -152,4 +106,70 @@ func (d *DBStorage) LoadAll() (map[string]string, error) {
 	}
 
 	return data, nil
+}
+
+func (d *DBStorage) Save(url *model.URLDto) error {
+	query, err := sqlFiles.ReadFile("queries/insert_url.sql")
+	if err != nil {
+		log.Printf("failed to read insert_url.sql: %v", err)
+		return err
+	}
+
+	stmt, err := d.db.PrepareContext(context.Background(), string(query))
+	if err != nil {
+		log.Printf("failed to save() prepare statement: %v", err)
+		return err
+	}
+	defer stmt.Close()
+
+	return d.write(stmt, url)
+}
+
+func (d *DBStorage) Saves(urls []model.URLDto) error {
+	tx, err := d.db.Begin()
+	if err != nil {
+		log.Printf("failed to begin transaction: %v", err)
+		return err
+	}
+
+	query, err := sqlFiles.ReadFile("queries/insert_url.sql")
+	if err != nil {
+		tx.Rollback()
+		log.Printf("failed to read insert_url.sql: %v", err)
+		return err
+	}
+
+	stmt, err := tx.PrepareContext(context.Background(), string(query))
+	if err != nil {
+		tx.Rollback()
+		log.Printf("failed to prepare statement in transaction: %v", err)
+		return err
+	}
+	defer stmt.Close()
+
+	for i := range urls {
+		err := d.write(stmt, &urls[i])
+		if err != nil {
+			tx.Rollback()
+			log.Printf("failed to save URL in batch: %v", err)
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (d *DBStorage) write(stmt *sql.Stmt, url *model.URLDto) error {
+	_, err := stmt.Exec(
+		url.UUID,
+		url.ShortURL,
+		url.OriginalURL,
+	)
+	if err != nil {
+		log.Printf("failed to write() execute statement: %v", err)
+		return err
+	}
+
+	log.Printf("saved url: %s -> %s", url.ShortURL, url.OriginalURL)
+	return nil
 }
