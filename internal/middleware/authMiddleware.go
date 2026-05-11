@@ -16,8 +16,8 @@ func InitAuthMiddleware(enabled bool) {
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !authEnabled {
-			//ctx := context.WithValue(r.Context(), "userID", "")
-			//next.ServeHTTP(w, r.WithContext(ctx))
+			ctx := context.WithValue(r.Context(), "userID", "")
+			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 
