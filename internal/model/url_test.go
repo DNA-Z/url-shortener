@@ -9,7 +9,8 @@ import (
 func TestNewShortURL(t *testing.T) {
 	t.Run("creates a new URLDto with non-empty ShortURL and correct OriginalURL", func(t *testing.T) {
 		originalURL := "https://example.com/very/long/path"
-		shortener := NewShortURL(originalURL)
+		userID := "debee59d-87fd-4e8d-a554-63933ebf009f"
+		shortener, _ := NewShortURL(originalURL, userID)
 
 		assert.NotEmpty(t, shortener.ShortURL)
 		assert.Equal(t, originalURL, shortener.OriginalURL)
@@ -19,8 +20,9 @@ func TestNewShortURL(t *testing.T) {
 	t.Run("each call returns different ShortURL for same OriginalURL", func(t *testing.T) {
 		originalURL := "https://example.com"
 
-		first := NewShortURL(originalURL)
-		second := NewShortURL(originalURL)
+		userID := "debee59d-87fd-4e8d-a554-63933ebf009f"
+		first, _ := NewShortURL(originalURL, userID)
+		second, _ := NewShortURL(originalURL, userID)
 
 		assert.Equal(t, originalURL, first.OriginalURL)
 		assert.Equal(t, originalURL, second.OriginalURL)
@@ -28,7 +30,7 @@ func TestNewShortURL(t *testing.T) {
 	})
 
 	t.Run("handles empty OriginalURL correctly", func(t *testing.T) {
-		shortener := NewShortURL("")
+		shortener, _ := NewShortURL("", "")
 
 		assert.NotEmpty(t, shortener.ShortURL)
 		assert.Empty(t, shortener.OriginalURL)
