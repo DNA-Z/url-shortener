@@ -9,9 +9,9 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/dto"
 )
 
-func (h *URLHandler) ShortenBatchPost(res http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		http.Error(res, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
+func (h *URLHandler) ShortenBatchPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
 		return
 	}
 	var baseAddress = h.baseURL
@@ -20,15 +20,26 @@ func (h *URLHandler) ShortenBatchPost(res http.ResponseWriter, req *http.Request
 	}
 
 	var request []dto.BatchRequestDto
-	dec := json.NewDecoder(req.Body)
+	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&request); err != nil {
-		http.Error(res, "Cannot decode request JSON body", http.StatusBadRequest)
+		http.Error(w, "Cannot decode request JSON body", http.StatusBadRequest)
 		return
 	}
 
-	response, err := h.urlService.Batch(request, baseAddress)
+	userID, ok := r.Context().Value("userID").(string)
+	if !ok {
+		cookie, err := r.Cookie("user_jwt")
+		if err == nil && cookie.Value != "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	response, err := h.urlService.Batch(request, baseAddress, userID)
 	if err != nil {
-		http.Error(res, "Batch processing failed", http.StatusInternalServerError)
+		http.Error(w, "Batch processing failed", http.StatusInternalServerError)
 		return
 	}
 
@@ -36,12 +47,12 @@ func (h *URLHandler) ShortenBatchPost(res http.ResponseWriter, req *http.Request
 		log.Printf("Batch processing response short URL: %v", response[i].ShortURL)
 	}
 
-	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 
-	enc := json.NewEncoder(res)
+	enc := json.NewEncoder(w)
 	if err := enc.Encode(response); err != nil {
-		http.Error(res, "Error encoding response", http.StatusInternalServerError)
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		return
 	}
 }

@@ -17,7 +17,7 @@ func NewOptions() *Options {
 		ServerAddress:    "localhost:8080",
 		BaseURL:          "http://localhost:8080/",
 		FileStoragePath:  "short_url",
-		ConnectionString: "",
+		ConnectionString: "host=localhost port=5432 user=postgres password=lightning dbname=short_url sslmode=disable",
 	}
 }
 
@@ -27,7 +27,6 @@ func (o *Options) OptionsInit() {
 	defaultFileStoragePath := o.FileStoragePath
 	defaultConnectionStr := o.ConnectionString
 
-	// Проверяем, определён ли уже флаг "a"
 	if flag.Lookup("a") == nil {
 		serverAddressFlag := flag.String("a", defaultServerAddress, "адрес HTTP-сервера")
 		baseURLFlag := flag.String("b", defaultBaseURL, "базовый адрес URL")
@@ -41,7 +40,6 @@ func (o *Options) OptionsInit() {
 		o.PathToFile(fileStoragePath)
 		o.ConnectionStringSet(connectionStringFlag)
 	} else {
-		// Флаги уже проинициализированы — просто используем текущие значения
 		o.ServerAddressSet(&o.ServerAddress)
 		o.BaseURLSet(&o.BaseURL)
 		o.PathToFile(&o.FileStoragePath)

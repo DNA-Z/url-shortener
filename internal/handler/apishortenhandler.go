@@ -11,8 +11,8 @@ import (
 	cerrors "github.com/DNA-Z/url-shortener/internal/errors"
 )
 
-func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
+func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
 		return
 	}
@@ -24,7 +24,7 @@ func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, req *http.Request) {
 	var request dto.URLRequestDto
 	var response dto.URLResponseDto
 
-	dec := json.NewDecoder(req.Body)
+	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&request); err != nil {
 		http.Error(w, "Cannot decode request JSON body", http.StatusBadRequest)
 		return
@@ -35,7 +35,18 @@ func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, req *http.Request) {
 	}
 	httpStatus := http.StatusCreated
 
-	shortUrl, err := h.urlService.Shorten(request.URL)
+	userID, ok := r.Context().Value("userID").(string)
+	if !ok {
+		cookie, err := r.Cookie("user_jwt")
+		if err == nil && cookie.Value != "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	shortUrl, err := h.urlService.Shorten(request.URL, userID)
 
 	var conflictErr *cerrors.ConflictError
 	if err != nil && !errors.As(err, &conflictErr) {

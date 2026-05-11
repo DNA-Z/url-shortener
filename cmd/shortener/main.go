@@ -29,8 +29,11 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.LoggerMiddleware)
 	r.Use(middleware.GzipMiddleware)
+	r.Use(middleware.AuthMiddleware)
+
 	r.Get("/ping", pingHandler.GetDbPing)
 	r.Get("/{id}", urlHandler.GetByIDGet)
+	r.Get("/api/user/urls", urlHandler.GetUserURLs)
 	r.Post("/", urlHandler.ShortenerPost)
 	r.Post("/api/shorten", urlHandler.ShortenURLPost)
 	r.Post("/api/shorten/batch", urlHandler.ShortenBatchPost)
@@ -48,7 +51,7 @@ func getLogger() *zap.Logger {
 	return logger
 }
 
-func getService(cfg *config.Options) *service.URL {
+func getService(cfg *config.Options) *service.URLStorage {
 	urlService, err := service.NewURL(cfg)
 	if err != nil {
 		log.Fatal("Failed to initialize storage: ", err)

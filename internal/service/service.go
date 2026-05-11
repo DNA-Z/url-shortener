@@ -9,14 +9,15 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/errors"
 	"github.com/DNA-Z/url-shortener/internal/model"
 	"github.com/DNA-Z/url-shortener/internal/storage"
+	"github.com/google/uuid"
 )
 
-type URL struct {
+type URLStorage struct {
 	storage storage.URLStorage
 	isDB    bool
 }
 
-func NewURL(cfg *config.Options) (*URL, error) {
+func NewURL(cfg *config.Options) (*URLStorage, error) {
 	var store storage.URLStorage
 	var err error
 	isDB := false
@@ -45,7 +46,7 @@ func NewURL(cfg *config.Options) (*URL, error) {
 	return newURLService(store, isDB)
 }
 
-func (u *URL) Shorten(originalURL string) (string, error) {
+func (u *URLStorage) Shorten(originalURL string, userID string) (string, error) {
 
 	data, err := u.storage.LoadAll()
 	if err != nil {
@@ -64,7 +65,10 @@ func (u *URL) Shorten(originalURL string) (string, error) {
 		}
 	}
 
-	newURL := model.NewShortURL(originalURL)
+	newURL, err := model.NewShortURL(originalURL, userID)
+	if err != nil {
+		return "", err
+	}
 
 	if err := u.storage.Save(newURL); err != nil {
 		return "", err
@@ -72,7 +76,7 @@ func (u *URL) Shorten(originalURL string) (string, error) {
 	return newURL.ShortURL, nil
 }
 
-func (u *URL) GetByID(shortURL string) (string, error) {
+func (u *URLStorage) GetByID(shortURL string) (string, error) {
 	log.Printf("Get by id called with param='%s'", shortURL)
 
 	url, err := u.storage.Get(shortURL)
@@ -85,11 +89,28 @@ func (u *URL) GetByID(shortURL string) (string, error) {
 	return url, nil
 }
 
-func (u *URL) Batch(request []dto.BatchRequestDto, baseAddress string) (response []dto.BatchResponseDto, err error) {
+func (u *URLStorage) GetUserUrls(userID string) ([]dto.UserURLsResponseDto, error) {
+	log.Printf("Get urls by user id called with param='%s'", userID)
+
+	parsedUUID, err := uuid.Parse(userID)
+	if err != nil {
+		log.Printf("Parse error UUID: %v\n", err)
+	}
+
+	urls, err := u.storage.GetUserURLs(parsedUUID)
+	if err != nil {
+		log.Printf("Get URLs failed for userID=%s: %v", userID, err)
+		return nil, err
+	}
+
+	return urls, nil
+}
+
+func (u *URLStorage) Batch(request []dto.BatchRequestDto, baseAddress string, userID string) (response []dto.BatchResponseDto, err error) {
 	response = make([]dto.BatchResponseDto, 0, len(request))
 
 	for _, req := range request {
-		shortURL, err := u.Shorten(req.OriginalURL)
+		shortURL, err := u.Shorten(req.OriginalURL, userID)
 
 		log.Printf("shortened from '%+q' -> '%+q'\n", req.OriginalURL, shortURL)
 
@@ -106,8 +127,8 @@ func (u *URL) Batch(request []dto.BatchRequestDto, baseAddress string) (response
 	return response, err
 }
 
-func newURLService(store storage.URLStorage, isDB bool) (*URL, error) {
-	urlService := &URL{storage: store, isDB: isDB}
+func newURLService(store storage.URLStorage, isDB bool) (*URLStorage, error) {
+	urlService := &URLStorage{storage: store, isDB: isDB}
 
 	if data, err := store.LoadAll(); err == nil {
 		_ = data

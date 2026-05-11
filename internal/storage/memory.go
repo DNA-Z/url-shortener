@@ -4,24 +4,33 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/DNA-Z/url-shortener/internal/dto"
 	"github.com/DNA-Z/url-shortener/internal/model"
+	"github.com/google/uuid"
 )
 
 type MemoryStorage struct {
-	data map[string]string
+	data []URL
 	mu   sync.RWMutex
 }
 
 func NewMemoryStorage() *MemoryStorage {
 	return &MemoryStorage{
-		data: make(map[string]string),
+		data: make([]URL, 0),
 	}
 }
 
 func (m *MemoryStorage) Save(url *model.URLDto) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.data[url.ShortURL] = url.OriginalURL
+
+	m.data = append(m.data, URL{
+		UserID:      url.UserID,
+		ShortURL:    url.ShortURL,
+		OriginalURL: url.OriginalURL,
+		IsDeleted:   false,
+	})
+
 	return nil
 }
 
@@ -30,7 +39,12 @@ func (m *MemoryStorage) Saves(urls []model.URLDto) error {
 	defer m.mu.Unlock()
 
 	for _, url := range urls {
-		m.data[url.ShortURL] = url.OriginalURL
+		m.data = append(m.data, URL{
+			UserID:      url.UserID,
+			ShortURL:    url.ShortURL,
+			OriginalURL: url.OriginalURL,
+			IsDeleted:   false,
+		})
 	}
 
 	return nil
@@ -39,19 +53,42 @@ func (m *MemoryStorage) Saves(urls []model.URLDto) error {
 func (m *MemoryStorage) Get(shortURL string) (string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	url, exists := m.data[shortURL]
-	if exists == false {
-		return "", fmt.Errorf("URL not found for short URL: %s", shortURL)
+
+	for _, url := range m.data {
+		if url.ShortURL == shortURL && !url.IsDeleted {
+			return url.OriginalURL, nil
+		}
 	}
-	return url, nil
+
+	return "", fmt.Errorf("URL not found for short URL: %s", shortURL)
+}
+
+func (m *MemoryStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var result []dto.UserURLsResponseDto
+	for _, entry := range m.data {
+		if entry.UserID == userID && !entry.IsDeleted {
+			result = append(result, dto.UserURLsResponseDto{
+				ShortURL:    entry.ShortURL,
+				OriginalURL: entry.OriginalURL,
+			})
+		}
+	}
+
+	return result, nil
 }
 
 func (m *MemoryStorage) LoadAll() (map[string]string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
+
 	clone := make(map[string]string)
-	for k, v := range m.data {
-		clone[k] = v
+	for _, url := range m.data {
+		if !url.IsDeleted {
+			clone[url.ShortURL] = url.OriginalURL
+		}
 	}
 	return clone, nil
 }

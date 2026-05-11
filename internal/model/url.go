@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"math/rand"
 	"strings"
 
@@ -9,8 +10,10 @@ import (
 
 type URLDto struct {
 	UUID        uuid.UUID `json:"uuid"`
+	UserID      uuid.UUID `json:"user_id"`
 	ShortURL    string    `json:"short_url"`
 	OriginalURL string    `json:"original_url"`
+	IsDeleted   bool      `json:"is_deleted"`
 }
 
 func generateShortCode() string {
@@ -25,10 +28,17 @@ func generateShortCode() string {
 	return b.String()
 }
 
-func NewShortURL(originalURL string) *URLDto {
+func NewShortURL(originalURL string, userID string) (*URLDto, error) {
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, errors.New("invalid UUID format for user_id")
+	}
+
 	return &URLDto{
 		UUID:        uuid.New(),
+		UserID:      parsedUserID,
 		ShortURL:    generateShortCode(),
 		OriginalURL: originalURL,
-	}
+		IsDeleted:   false,
+	}, nil
 }

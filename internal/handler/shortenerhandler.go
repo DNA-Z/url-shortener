@@ -10,39 +10,50 @@ import (
 	cerrors "github.com/DNA-Z/url-shortener/internal/errors"
 )
 
-func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
+func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
 	var baseAddress = h.baseURL
 
 	if !strings.HasSuffix(baseAddress, "/") {
 		baseAddress += "/"
 	}
 
-	if req.Method != http.MethodPost {
-		http.Error(res, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
 		return
 	}
 
-	body, err := io.ReadAll(req.Body)
-	req.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	r.Body.Close()
 
 	if err != nil {
-		http.Error(res, "Error reading request body: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "Error reading request body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	url := string(body)
 
 	if url == "" {
-		http.Error(res, "Request url is required", http.StatusBadRequest)
+		http.Error(w, "Request url is required", http.StatusBadRequest)
 		return
 	}
 
-	shortURL, err := h.urlService.Shorten(url)
+	userID, ok := r.Context().Value("userID").(string)
+	if !ok {
+		cookie, err := r.Cookie("user_jwt")
+		if err == nil && cookie.Value != "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	shortURL, err := h.urlService.Shorten(url, userID)
 
 	httpStatus := http.StatusCreated
 	var conflictErr *cerrors.ConflictError
 	if err != nil && !errors.As(err, &conflictErr) {
-		http.Error(res, "Error shortening URL: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "Error shortening URL: "+err.Error(), http.StatusBadRequest)
 	}
 	if errors.As(err, &conflictErr) {
 		httpStatus = http.StatusConflict
@@ -51,6 +62,6 @@ func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 
 	result := baseAddress + shortURL
 
-	res.WriteHeader(httpStatus)
-	res.Write([]byte(result))
+	w.WriteHeader(httpStatus)
+	w.Write([]byte(result))
 }
