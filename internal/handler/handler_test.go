@@ -12,6 +12,7 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/config"
 	"github.com/DNA-Z/url-shortener/internal/dto"
 	"github.com/DNA-Z/url-shortener/internal/service"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +36,8 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 				require.NoError(t, err, "failed to service.NewURL(configure)")
 
 				userID := "debee59d-87fd-4e8d-a554-63933ebf009f"
-				shortID, err := svc.Shorten("https://example.com", userID)
+				parseUserID, err := uuid.Parse(userID)
+				shortID, err := svc.Shorten("https://example.com", parseUserID)
 				require.NoError(t, err, "failed to shorten URL")
 
 				t.Setenv("TEST_SHORT_ID", shortID) // или передать через замыкание
@@ -62,7 +64,8 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 				require.NoError(t, err, "failed to service.NewURL(configure)")
 
 				userID := "debee59d-87fd-4e8d-a554-63933ebf009f"
-				_, err = svc.Shorten("https://example.com", userID)
+				parseUserID, err := uuid.Parse(userID)
+				_, err = svc.Shorten("https://example.com", parseUserID)
 				require.NoError(t, err, "failed to shorten URL")
 				return svc
 			}(),

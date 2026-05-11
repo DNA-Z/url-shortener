@@ -3,6 +3,7 @@ package model
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -10,7 +11,8 @@ func TestNewShortURL(t *testing.T) {
 	t.Run("creates a new URLDto with non-empty ShortURL and correct OriginalURL", func(t *testing.T) {
 		originalURL := "https://example.com/very/long/path"
 		userID := "debee59d-87fd-4e8d-a554-63933ebf009f"
-		shortener, _ := NewShortURL(originalURL, userID)
+		parseUserID, _ := uuid.Parse(userID)
+		shortener, _ := NewShortURL(originalURL, parseUserID)
 
 		assert.NotEmpty(t, shortener.ShortURL)
 		assert.Equal(t, originalURL, shortener.OriginalURL)
@@ -21,8 +23,9 @@ func TestNewShortURL(t *testing.T) {
 		originalURL := "https://example.com"
 
 		userID := "debee59d-87fd-4e8d-a554-63933ebf009f"
-		first, _ := NewShortURL(originalURL, userID)
-		second, _ := NewShortURL(originalURL, userID)
+		parseUserID, _ := uuid.Parse(userID)
+		first, _ := NewShortURL(originalURL, parseUserID)
+		second, _ := NewShortURL(originalURL, parseUserID)
 
 		assert.Equal(t, originalURL, first.OriginalURL)
 		assert.Equal(t, originalURL, second.OriginalURL)
@@ -30,7 +33,7 @@ func TestNewShortURL(t *testing.T) {
 	})
 
 	t.Run("handles empty OriginalURL correctly", func(t *testing.T) {
-		shortener, _ := NewShortURL("", "")
+		shortener, _ := NewShortURL("", uuid.Nil)
 
 		assert.NotEmpty(t, shortener.ShortURL)
 		assert.Empty(t, shortener.OriginalURL)
