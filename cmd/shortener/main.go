@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/DNA-Z/url-shortener/internal/auth"
 	"github.com/DNA-Z/url-shortener/internal/config"
 	"github.com/DNA-Z/url-shortener/internal/handler"
 	"github.com/DNA-Z/url-shortener/internal/middleware"
@@ -19,6 +20,10 @@ func main() {
 
 	cfg := config.NewOptions()
 	cfg.OptionsInit()
+
+	auth.SetJWTSecretKey(cfg.SecretKey)
+	middleware.InitAuthMiddleware(auth.IsAuthEnabled())
+
 	urlService := getService(cfg)
 
 	urlHandler := handler.NewURLHandler(urlService, cfg.ServerAddress, cfg.BaseURL)
@@ -29,18 +34,19 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.LoggerMiddleware)
 	r.Use(middleware.GzipMiddleware)
-	//r.Use(middleware.AuthMiddleware)
+	r.Use(middleware.AuthMiddleware)
 
 	r.Get("/ping", pingHandler.GetDbPing)
 	r.Get("/{id}", urlHandler.GetByIDGet)
+	r.Get("/api/user/urls", urlHandler.GetUserURLs)
 	r.Post("/", urlHandler.ShortenerPost)
 	r.Post("/api/shorten", urlHandler.ShortenURLPost)
 	r.Post("/api/shorten/batch", urlHandler.ShortenBatchPost)
 
-	r.Group(func(r chi.Router) {
-		r.Use(middleware.AuthMiddleware)
-		r.Get("/api/user/urls", urlHandler.GetUserURLs)
-	})
+	//r.Group(func(r chi.Router) {
+	//	r.Use(middleware.AuthMiddleware)
+	//	r.Get("/api/user/urls", urlHandler.GetUserURLs)
+	//})
 
 	log.Printf("Сервер запущен на %s\n", cfg.ServerAddress)
 	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))

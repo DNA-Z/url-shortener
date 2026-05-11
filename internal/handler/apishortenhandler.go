@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/DNA-Z/url-shortener/internal/auth"
 	"github.com/DNA-Z/url-shortener/internal/dto"
 	cerrors "github.com/DNA-Z/url-shortener/internal/errors"
 )
@@ -35,7 +36,11 @@ func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, r *http.Request) {
 	}
 	httpStatus := http.StatusCreated
 
-	userID, _ := r.Context().Value("userID").(string)
+	userID := ""
+
+	if auth.IsAuthEnabled() {
+		userID, _ = r.Context().Value("userID").(string)
+	}
 
 	shortUrl, err := h.urlService.Shorten(request.URL, userID)
 

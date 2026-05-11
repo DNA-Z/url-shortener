@@ -10,6 +10,7 @@ type Options struct {
 	BaseURL          string
 	FileStoragePath  string
 	ConnectionString string
+	SecretKey        string
 }
 
 func NewOptions() *Options {
@@ -26,12 +27,14 @@ func (o *Options) OptionsInit() {
 	defaultBaseURL := o.BaseURL
 	defaultFileStoragePath := o.FileStoragePath
 	defaultConnectionStr := o.ConnectionString
+	defaultSecretKey := o.SecretKey
 
 	if flag.Lookup("a") == nil {
 		serverAddressFlag := flag.String("a", defaultServerAddress, "адрес HTTP-сервера")
 		baseURLFlag := flag.String("b", defaultBaseURL, "базовый адрес URL")
 		fileStoragePath := flag.String("f", defaultFileStoragePath, "файл в корне проекта")
 		connectionStringFlag := flag.String("d", defaultConnectionStr, "строка подключения к БД")
+		secretKeyFlag := flag.String("k", defaultSecretKey, "секретный ключ для подписи JWT")
 
 		flag.Parse()
 
@@ -39,11 +42,13 @@ func (o *Options) OptionsInit() {
 		o.BaseURLSet(baseURLFlag)
 		o.PathToFile(fileStoragePath)
 		o.ConnectionStringSet(connectionStringFlag)
+		o.SecretKeySet(secretKeyFlag)
 	} else {
 		o.ServerAddressSet(&o.ServerAddress)
 		o.BaseURLSet(&o.BaseURL)
 		o.PathToFile(&o.FileStoragePath)
 		o.ConnectionStringSet(&o.ConnectionString)
+		o.SecretKeySet(&o.SecretKey)
 	}
 }
 
@@ -81,4 +86,17 @@ func (o *Options) ConnectionStringSet(connectionStringFlag *string) {
 	case *connectionStringFlag != o.ConnectionString:
 		o.ConnectionString = *connectionStringFlag
 	}
+}
+
+func (o *Options) SecretKeySet(secretKeyFlag *string) {
+	switch {
+	case os.Getenv("KEY") != "":
+		o.SecretKey = os.Getenv("KEY")
+	case *secretKeyFlag != o.SecretKey:
+		o.SecretKey = *secretKeyFlag
+	}
+}
+
+func (o *Options) IsAuthEnabled() bool {
+	return o.SecretKey != ""
 }

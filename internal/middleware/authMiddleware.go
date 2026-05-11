@@ -7,8 +7,20 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/auth"
 )
 
+var authEnabled bool
+
+func InitAuthMiddleware(enabled bool) {
+	authEnabled = enabled
+}
+
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !authEnabled {
+			//ctx := context.WithValue(r.Context(), "userID", "")
+			//next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
 		userID, err := GetUserIDFromCookie(r)
 
 		if err != nil {
@@ -50,7 +62,7 @@ func SetUserCookie(w http.ResponseWriter, userID string) error {
 		Value:    tokenString,
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false, // в production true
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   int(auth.TOKEN_EXP.Seconds()),
 	})

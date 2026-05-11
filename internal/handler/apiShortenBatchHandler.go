@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/DNA-Z/url-shortener/internal/auth"
 	"github.com/DNA-Z/url-shortener/internal/dto"
 )
 
@@ -26,7 +27,11 @@ func (h *URLHandler) ShortenBatchPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, _ := r.Context().Value("userID").(string)
+	userID := ""
+
+	if auth.IsAuthEnabled() {
+		userID, _ = r.Context().Value("userID").(string)
+	}
 
 	response, err := h.urlService.Batch(request, baseAddress, userID)
 	if err != nil {
