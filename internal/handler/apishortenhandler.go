@@ -4,15 +4,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
 	"github.com/DNA-Z/url-shortener/internal/auth"
 	"github.com/DNA-Z/url-shortener/internal/dto"
 	cerrors "github.com/DNA-Z/url-shortener/internal/errors"
+	"github.com/google/uuid"
 )
 
 func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, r *http.Request) {
+	log.Print("API shorten URL")
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
 		return
@@ -36,10 +39,14 @@ func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, r *http.Request) {
 	}
 	httpStatus := http.StatusCreated
 
-	userID := ""
+	userID := uuid.Nil
 
 	if auth.IsAuthEnabled() {
-		userID, _ = r.Context().Value("userID").(string)
+		if userIDStr, ok := r.Context().Value("userID").(string); ok && userIDStr != "" {
+			if parsed, err := uuid.Parse(userIDStr); err == nil {
+				userID = parsed
+			}
+		}
 	}
 
 	shortUrl, err := h.urlService.Shorten(request.URL, userID)

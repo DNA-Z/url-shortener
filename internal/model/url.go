@@ -1,7 +1,6 @@
 package model
 
 import (
-	"errors"
 	"math/rand"
 	"strings"
 
@@ -28,15 +27,10 @@ func generateShortCode() string {
 	return b.String()
 }
 
-func NewShortURL(originalURL string, userID string) (*URLDto, error) {
-	parsedUserID, err := uuid.Parse(userID)
-	if err != nil {
-		return nil, errors.New("invalid UUID format for user_id")
-	}
-
+func NewShortURL(originalURL string, userID uuid.UUID) (*URLDto, error) {
 	return &URLDto{
 		UUID:        uuid.New(),
-		UserID:      parsedUserID,
+		UserID:      userID,
 		ShortURL:    generateShortCode(),
 		OriginalURL: originalURL,
 		IsDeleted:   false,

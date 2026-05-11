@@ -4,14 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
 	"github.com/DNA-Z/url-shortener/internal/auth"
 	cerrors "github.com/DNA-Z/url-shortener/internal/errors"
+	"github.com/google/uuid"
 )
 
 func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
+	log.Print("Shortener URL")
 	var baseAddress = h.baseURL
 
 	if !strings.HasSuffix(baseAddress, "/") {
@@ -38,10 +41,14 @@ func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := ""
+	userID := uuid.Nil
 
 	if auth.IsAuthEnabled() {
-		userID, _ = r.Context().Value("userID").(string)
+		if userIDStr, ok := r.Context().Value("userID").(string); ok && userIDStr != "" {
+			if parsed, err := uuid.Parse(userIDStr); err == nil {
+				userID = parsed
+			}
+		}
 	}
 
 	shortURL, err := h.urlService.Shorten(url, userID)

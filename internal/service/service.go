@@ -46,7 +46,7 @@ func NewURL(cfg *config.Options) (*URLStorage, error) {
 	return newURLService(store, isDB)
 }
 
-func (u *URLStorage) Shorten(originalURL string, userID string) (string, error) {
+func (u *URLStorage) Shorten(originalURL string, userID uuid.UUID) (string, error) {
 
 	data, err := u.storage.LoadAll()
 	if err != nil {
@@ -106,7 +106,7 @@ func (u *URLStorage) GetUserUrls(userID string) ([]dto.UserURLsResponseDto, erro
 	return urls, nil
 }
 
-func (u *URLStorage) Batch(request []dto.BatchRequestDto, baseAddress string, userID string) (response []dto.BatchResponseDto, err error) {
+func (u *URLStorage) Batch(request []dto.BatchRequestDto, baseAddress string, userID uuid.UUID) (response []dto.BatchResponseDto, err error) {
 	response = make([]dto.BatchResponseDto, 0, len(request))
 
 	for _, req := range request {
