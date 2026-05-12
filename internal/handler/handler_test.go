@@ -20,7 +20,7 @@ import (
 func TestURLHandler_GetByIDGet(t *testing.T) {
 	tests := []struct {
 		name           string
-		svc            *service.URLStorage
+		svc            *service.URLStorages
 		req            *http.Request
 		res            http.ResponseWriter
 		expectedStatus int
@@ -29,7 +29,7 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 	}{
 		{
 			name: "successful redirect with valid ID",
-			svc: func() *service.URLStorage {
+			svc: func() *service.URLStorages {
 				configure := config.NewOptions()
 				configure.OptionsInit()
 				svc, err := service.NewURL(configure)
@@ -57,7 +57,7 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 		},
 		{
 			name: "non-existent ID returns error",
-			svc: func() *service.URLStorage {
+			svc: func() *service.URLStorages {
 				configure := config.NewOptions()
 				configure.OptionsInit()
 				svc, err := service.NewURL(configure)
@@ -81,7 +81,7 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 		},
 		{
 			name: "empty URLs map returns error",
-			svc: func() *service.URLStorage {
+			svc: func() *service.URLStorages {
 				configure := config.NewOptions()
 				configure.OptionsInit()
 				svc, err := service.NewURL(configure)
