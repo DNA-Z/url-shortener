@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/DNA-Z/url-shortener/internal/auth"
 	"github.com/DNA-Z/url-shortener/internal/config"
 	"github.com/DNA-Z/url-shortener/internal/handler"
 	"github.com/DNA-Z/url-shortener/internal/middleware"
@@ -21,8 +20,8 @@ func main() {
 	cfg := config.NewOptions()
 	cfg.OptionsInit()
 
-	auth.SetJWTSecretKey(cfg.SecretKey)
-	middleware.InitAuthMiddleware(auth.IsAuthEnabled())
+	//auth.SetJWTSecretKey(cfg.SecretKey)
+	//middleware.InitAuthMiddleware(auth.IsAuthEnabled())
 
 	urlService := getService(cfg)
 
@@ -34,7 +33,7 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.LoggerMiddleware)
 	r.Use(middleware.GzipMiddleware)
-	r.Use(middleware.AuthMiddleware)
+	//r.Use(middleware.AuthMiddleware)
 
 	r.Get("/ping", pingHandler.GetDbPing)
 	r.Get("/{id}", urlHandler.GetByIDGet)
