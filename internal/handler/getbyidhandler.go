@@ -7,6 +7,8 @@ import (
 )
 
 func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
+	log.Print("GetByIDGet()...")
+
 	if req.Method != http.MethodGet {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)
 		return

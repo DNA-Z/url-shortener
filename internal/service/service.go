@@ -12,12 +12,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type URLStorage struct {
+type URLStorages struct {
 	storage storage.URLStorage
 	isDB    bool
 }
 
-func NewURL(cfg *config.Options) (*URLStorage, error) {
+func NewURL(cfg *config.Options) (*URLStorages, error) {
 	var store storage.URLStorage
 	var err error
 	isDB := false
@@ -46,7 +46,7 @@ func NewURL(cfg *config.Options) (*URLStorage, error) {
 	return newURLService(store, isDB)
 }
 
-func (u *URLStorage) Shorten(originalURL string, userID uuid.UUID) (string, error) {
+func (u *URLStorages) Shorten(originalURL string, userID uuid.UUID) (string, error) {
 
 	data, err := u.storage.LoadAll()
 	if err != nil {
@@ -76,7 +76,7 @@ func (u *URLStorage) Shorten(originalURL string, userID uuid.UUID) (string, erro
 	return newURL.ShortURL, nil
 }
 
-func (u *URLStorage) GetByID(shortURL string) (string, error) {
+func (u *URLStorages) GetByID(shortURL string) (string, error) {
 	log.Printf("Get by id called with param='%s'", shortURL)
 
 	url, err := u.storage.Get(shortURL)
@@ -89,7 +89,7 @@ func (u *URLStorage) GetByID(shortURL string) (string, error) {
 	return url, nil
 }
 
-func (u *URLStorage) GetUserUrls(userID string) ([]dto.UserURLsResponseDto, error) {
+func (u *URLStorages) GetUserUrls(userID string) ([]dto.UserURLsResponseDto, error) {
 	log.Printf("Get urls by user id called with param='%s'", userID)
 
 	parsedUUID, err := uuid.Parse(userID)
@@ -106,7 +106,7 @@ func (u *URLStorage) GetUserUrls(userID string) ([]dto.UserURLsResponseDto, erro
 	return urls, nil
 }
 
-func (u *URLStorage) Batch(request []dto.BatchRequestDto, baseAddress string, userID uuid.UUID) (response []dto.BatchResponseDto, err error) {
+func (u *URLStorages) Batch(request []dto.BatchRequestDto, baseAddress string, userID uuid.UUID) (response []dto.BatchResponseDto, err error) {
 	response = make([]dto.BatchResponseDto, 0, len(request))
 
 	for _, req := range request {
@@ -127,8 +127,8 @@ func (u *URLStorage) Batch(request []dto.BatchRequestDto, baseAddress string, us
 	return response, err
 }
 
-func newURLService(store storage.URLStorage, isDB bool) (*URLStorage, error) {
-	urlService := &URLStorage{storage: store, isDB: isDB}
+func newURLService(store storage.URLStorage, isDB bool) (*URLStorages, error) {
+	urlService := &URLStorages{storage: store, isDB: isDB}
 
 	if data, err := store.LoadAll(); err == nil {
 		_ = data

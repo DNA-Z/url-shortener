@@ -5,12 +5,12 @@ import (
 )
 
 type URLHandler struct {
-	urlService    *service.URLStorage
+	urlService    *service.URLStorages
 	serverAddress string
 	baseURL       string
 }
 
-func NewURLHandler(svc *service.URLStorage, serverAddress string, baseURL string) *URLHandler {
+func NewURLHandler(svc *service.URLStorages, serverAddress string, baseURL string) *URLHandler {
 	return &URLHandler{
 		urlService:    svc,
 		serverAddress: serverAddress,
