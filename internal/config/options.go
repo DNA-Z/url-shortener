@@ -10,7 +10,7 @@ type Options struct {
 	BaseURL          string
 	FileStoragePath  string
 	ConnectionString string
-	SecretKey        string
+	//SecretKey        string
 }
 
 func NewOptions() *Options {
