@@ -19,7 +19,7 @@ func NewOptions() *Options {
 		BaseURL:          "http://localhost:8080/",
 		FileStoragePath:  "short_url",
 		ConnectionString: "",
-		SecretKey:        "",
+		//SecretKey:        "",
 	}
 }
 
@@ -28,14 +28,14 @@ func (o *Options) OptionsInit() {
 	defaultBaseURL := o.BaseURL
 	defaultFileStoragePath := o.FileStoragePath
 	defaultConnectionStr := o.ConnectionString
-	defaultSecretKey := o.SecretKey
+	//defaultSecretKey := o.SecretKey
 
 	if flag.Lookup("a") == nil {
 		serverAddressFlag := flag.String("a", defaultServerAddress, "адрес HTTP-сервера")
 		baseURLFlag := flag.String("b", defaultBaseURL, "базовый адрес URL")
 		fileStoragePath := flag.String("f", defaultFileStoragePath, "файл в корне проекта")
 		connectionStringFlag := flag.String("d", defaultConnectionStr, "строка подключения к БД")
-		secretKeyFlag := flag.String("k", defaultSecretKey, "секретный ключ для подписи JWT")
+		//secretKeyFlag := flag.String("k", defaultSecretKey, "секретный ключ для подписи JWT")
 
 		flag.Parse()
 
@@ -43,13 +43,13 @@ func (o *Options) OptionsInit() {
 		o.BaseURLSet(baseURLFlag)
 		o.PathToFile(fileStoragePath)
 		o.ConnectionStringSet(connectionStringFlag)
-		o.SecretKeySet(secretKeyFlag)
+		//o.SecretKeySet(secretKeyFlag)
 	} else {
 		o.ServerAddressSet(&o.ServerAddress)
 		o.BaseURLSet(&o.BaseURL)
 		o.PathToFile(&o.FileStoragePath)
 		o.ConnectionStringSet(&o.ConnectionString)
-		o.SecretKeySet(&o.SecretKey)
+		//o.SecretKeySet(&o.SecretKey)
 	}
 }
 
@@ -89,15 +89,15 @@ func (o *Options) ConnectionStringSet(connectionStringFlag *string) {
 	}
 }
 
-func (o *Options) SecretKeySet(secretKeyFlag *string) {
-	switch {
-	case os.Getenv("KEY") != "":
-		o.SecretKey = os.Getenv("KEY")
-	case *secretKeyFlag != o.SecretKey:
-		o.SecretKey = *secretKeyFlag
-	}
-}
-
-func (o *Options) IsAuthEnabled() bool {
-	return o.SecretKey != ""
-}
+//func (o *Options) SecretKeySet(secretKeyFlag *string) {
+//	switch {
+//	case os.Getenv("KEY") != "":
+//		o.SecretKey = os.Getenv("KEY")
+//	case *secretKeyFlag != o.SecretKey:
+//		o.SecretKey = *secretKeyFlag
+//	}
+//}
+//
+//func (o *Options) IsAuthEnabled() bool {
+//	return o.SecretKey != ""
+//}

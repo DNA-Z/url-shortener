@@ -37,7 +37,7 @@ func main() {
 
 	r.Get("/ping", pingHandler.GetDbPing)
 	r.Get("/{id}", urlHandler.GetByIDGet)
-	r.Get("/api/user/urls", urlHandler.GetUserURLs)
+	//r.Get("/api/user/urls", urlHandler.GetUserURLs)
 	r.Post("/", urlHandler.ShortenerPost)
 	r.Post("/api/shorten", urlHandler.ShortenURLPost)
 	r.Post("/api/shorten/batch", urlHandler.ShortenBatchPost)
