@@ -25,7 +25,7 @@ func (m *MemoryStorage) Save(url *model.URL) error {
 	defer m.mu.Unlock()
 
 	m.data = append(m.data, model.URL{
-		//UserID:      url.UserID,
+		UserID:      url.UserID,
 		ShortURL:    url.ShortURL,
 		OriginalURL: url.OriginalURL,
 		//IsDeleted:   false,

@@ -58,7 +58,7 @@ func (f *FileStorage) load() error {
 		f.data = append(f.data, model.URL{
 			ShortURL:    urlFile.ShortURL,
 			OriginalURL: urlFile.OriginalURL,
-			//UserID:      urlFile.UserID,
+			UserID:      urlFile.UserID,
 			//IsDeleted:   urlFile.IsDeleted,
 		})
 	}
