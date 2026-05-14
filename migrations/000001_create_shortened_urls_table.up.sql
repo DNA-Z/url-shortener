@@ -5,6 +5,5 @@ CREATE TABLE urls (
                         original_url TEXT NULL
 );
 
-CREATE INDEX idx_user_id ON urls(user_id);
 CREATE INDEX idx_short_url ON urls(short_url);
 CREATE INDEX idx_original_url ON urls(original_url);
