@@ -88,8 +88,14 @@ func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (string, error) {
 	return url, nil
 }
 
-func (u *URLStorage) GetUserURLsByUserID(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {
+func (u *URLStorage) GetUserURLsByUserID(userIDStr string) ([]dto.UserURLsResponseDto, error) {
 	log.Printf("Get users URLs by user id called with userID='%s'", userID)
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		log.Print("Invalid user ID format")
+		return nil, err
+	}
 
 	result, err := u.storage.GetUserURLs(userID)
 	if err != nil {

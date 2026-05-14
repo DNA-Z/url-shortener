@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/DNA-Z/url-shortener/internal/dto"
-	"github.com/google/uuid"
 )
 
 func (h *URLHandler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
@@ -14,18 +13,18 @@ func (h *URLHandler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//userID, ok := r.Context().Value("userID").(string)
-	//if !ok {
-	//	cookie, err := r.Cookie("user_jwt")
-	//	if err == nil && cookie.Value != "" {
-	//		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//		return
-	//	}
-	//	http.Error(w, "Unauthorized", http.StatusUnauthorized)
-	//	return
-	//}
+	userID, ok := r.Context().Value("userID").(string)
+	if !ok {
+		cookie, err := r.Cookie("user_jwt")
+		if err == nil && cookie.Value != "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-	urls, err := h.urlService.GetUserURLsByUserID(uuid.Nil)
+	urls, err := h.urlService.GetUserURLsByUserID(userID)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
