@@ -87,7 +87,7 @@ func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (string, error) {
 }
 
 func (u *URLStorage) GetUserURLsByUserID(userIDStr string) ([]dto.UserURLsResponseDto, error) {
-	log.Printf("Get users URLs by user id called with userID='%s'", userID)
+	log.Printf("Get users URLs by user id called with userID='%s'", userIDStr)
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
@@ -105,11 +105,11 @@ func (u *URLStorage) GetUserURLsByUserID(userIDStr string) ([]dto.UserURLsRespon
 	return result, nil
 }
 
-func (u *URLStorage) Batch(request []dto.BatchRequestDto, baseAddress string) (response []dto.BatchResponseDto, err error) {
+func (u *URLStorage) Batch(userID uuid.UUID, request []dto.BatchRequestDto, baseAddress string) (response []dto.BatchResponseDto, err error) {
 	response = make([]dto.BatchResponseDto, 0, len(request))
 
 	for _, req := range request {
-		shortURL, err := u.Shorten(req.OriginalURL)
+		shortURL, err := u.Shorten(userID, req.OriginalURL)
 
 		log.Printf("shortened from '%+q' -> '%+q'\n", req.OriginalURL, shortURL)
 
