@@ -21,7 +21,7 @@ func main() {
 	cfg := config.NewOptions()
 	cfg.OptionsInit()
 
-	//auth.SetJWTSecretKey(cfg.SecretKey)
+	auth.SetJWTSecretKey(cfg.SecretKey)
 	middleware.InitAuthMiddleware(auth.IsAuthEnabled())
 
 	urlService := getService(cfg)
