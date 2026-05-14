@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/DNA-Z/url-shortener/internal/dto"
 	"github.com/DNA-Z/url-shortener/internal/model"
-	"github.com/google/uuid"
 )
 
 type MemoryStorage struct {
@@ -63,22 +61,22 @@ func (m *MemoryStorage) Get(shortURL string) (string, error) {
 	return "", fmt.Errorf("URL not found for short URL: %s", shortURL)
 }
 
-func (m *MemoryStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	var result []dto.UserURLsResponseDto
-	for _, entry := range m.data {
-		if entry.UserID == userID && !entry.IsDeleted {
-			result = append(result, dto.UserURLsResponseDto{
-				ShortURL:    entry.ShortURL,
-				OriginalURL: entry.OriginalURL,
-			})
-		}
-	}
-
-	return result, nil
-}
+//func (m *MemoryStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {
+//	m.mu.RLock()
+//	defer m.mu.RUnlock()
+//
+//	var result []dto.UserURLsResponseDto
+//	for _, entry := range m.data {
+//		if entry.UserID == userID && !entry.IsDeleted {
+//			result = append(result, dto.UserURLsResponseDto{
+//				ShortURL:    entry.ShortURL,
+//				OriginalURL: entry.OriginalURL,
+//			})
+//		}
+//	}
+//
+//	return result, nil
+//}
 
 func (m *MemoryStorage) LoadAll() (map[string]string, error) {
 	m.mu.RLock()
