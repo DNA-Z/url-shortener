@@ -23,10 +23,10 @@ func (m *MemoryStorage) Save(url *model.URL) error {
 	defer m.mu.Unlock()
 
 	m.data = append(m.data, model.URL{
-		UserID:      url.UserID,
+		//UserID:      url.UserID,
 		ShortURL:    url.ShortURL,
 		OriginalURL: url.OriginalURL,
-		IsDeleted:   false,
+		//IsDeleted:   false,
 	})
 
 	return nil
@@ -38,10 +38,10 @@ func (m *MemoryStorage) Saves(urls []model.URL) error {
 
 	for _, url := range urls {
 		m.data = append(m.data, model.URL{
-			UserID:      url.UserID,
+			//UserID:      url.UserID,
 			ShortURL:    url.ShortURL,
 			OriginalURL: url.OriginalURL,
-			IsDeleted:   false,
+			//IsDeleted:   false,
 		})
 	}
 
@@ -53,7 +53,7 @@ func (m *MemoryStorage) Get(shortURL string) (string, error) {
 	defer m.mu.RUnlock()
 
 	for _, url := range m.data {
-		if url.ShortURL == shortURL && !url.IsDeleted {
+		if url.ShortURL == shortURL {
 			return url.OriginalURL, nil
 		}
 	}
@@ -84,9 +84,9 @@ func (m *MemoryStorage) LoadAll() (map[string]string, error) {
 
 	clone := make(map[string]string)
 	for _, url := range m.data {
-		if !url.IsDeleted {
-			clone[url.ShortURL] = url.OriginalURL
-		}
+		//if !url.IsDeleted {
+		clone[url.ShortURL] = url.OriginalURL
+		//}
 	}
 	return clone, nil
 }

@@ -8,11 +8,11 @@ import (
 )
 
 type URL struct {
-	UUID        uuid.UUID `json:"uuid"`
-	UserID      uuid.UUID `json:"user_id"`
-	ShortURL    string    `json:"short_url"`
-	OriginalURL string    `json:"original_url"`
-	IsDeleted   bool      `json:"is_deleted"`
+	UUID uuid.UUID `json:"uuid"`
+	//UserID      uuid.UUID `json:"user_id"`
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+	//IsDeleted   bool      `json:"is_deleted"`
 }
 
 func generateShortCode() string {
@@ -27,12 +27,12 @@ func generateShortCode() string {
 	return b.String()
 }
 
-func NewShortURL(originalURL string, userID uuid.UUID) (*URL, error) {
+func NewShortURL(originalURL string) (*URL, error) {
 	return &URL{
-		UUID:        uuid.New(),
-		UserID:      userID,
+		UUID: uuid.New(),
+		//UserID:      userID,
 		ShortURL:    generateShortCode(),
 		OriginalURL: originalURL,
-		IsDeleted:   false,
+		//IsDeleted:   false,
 	}, nil
 }

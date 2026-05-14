@@ -206,8 +206,8 @@ func (d *DBStorage) write(stmt *sql.Stmt, url *model.URL) error {
 		url.UUID,
 		url.ShortURL,
 		url.OriginalURL,
-		url.UserID,
-		url.IsDeleted,
+		//url.UserID,
+		//url.IsDeleted,
 	)
 	if err != nil {
 		log.Printf("failed to write() execute statement: %v", err)

@@ -56,8 +56,8 @@ func (f *FileStorage) load() error {
 		f.data = append(f.data, model.URL{
 			ShortURL:    urlFile.ShortURL,
 			OriginalURL: urlFile.OriginalURL,
-			UserID:      urlFile.UserID,
-			IsDeleted:   urlFile.IsDeleted,
+			//UserID:      urlFile.UserID,
+			//IsDeleted:   urlFile.IsDeleted,
 		})
 	}
 	return f.scanner.Err()
@@ -88,8 +88,8 @@ func (f *FileStorage) Save(url *model.URL) error {
 	f.data = append(f.data, model.URL{
 		ShortURL:    url.ShortURL,
 		OriginalURL: url.OriginalURL,
-		UserID:      url.UserID,
-		IsDeleted:   url.IsDeleted,
+		//UserID:      url.UserID,
+		//IsDeleted:   url.IsDeleted,
 	})
 	return nil
 }
@@ -117,8 +117,8 @@ func (f *FileStorage) Saves(urls []model.URL) error {
 		f.data = append(f.data, model.URL{
 			ShortURL:    url.ShortURL,
 			OriginalURL: url.OriginalURL,
-			UserID:      url.UserID,
-			IsDeleted:   url.IsDeleted,
+			//UserID:      url.UserID,
+			//IsDeleted:   url.IsDeleted,
 		})
 	}
 	return f.writer.Flush()
@@ -129,7 +129,7 @@ func (f *FileStorage) Get(shortURL string) (string, error) {
 	defer f.mu.RUnlock()
 
 	for _, url := range f.data {
-		if url.ShortURL == shortURL && !url.IsDeleted {
+		if url.ShortURL == shortURL {
 			return url.OriginalURL, nil
 		}
 	}
@@ -163,9 +163,9 @@ func (f *FileStorage) LoadAll() (map[string]string, error) {
 
 	clone := make(map[string]string)
 	for _, url := range f.data {
-		if !url.IsDeleted {
-			clone[url.ShortURL] = url.OriginalURL
-		}
+		//if !url.IsDeleted {
+		clone[url.ShortURL] = url.OriginalURL
+		//}
 	}
 	return clone, nil
 }
