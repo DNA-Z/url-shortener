@@ -1,7 +1,5 @@
--- SELECT
---     user_id,
---     short_url,
---     original_url,
---     is_deleted,
--- FROM urls
--- WHERE user_id = $1;
+SELECT
+    short_url,
+    original_url
+FROM urls
+WHERE user_id = $1;

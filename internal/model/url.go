@@ -8,10 +8,10 @@ import (
 )
 
 type URL struct {
-	UUID uuid.UUID `json:"uuid"`
-	//UserID      uuid.UUID `json:"user_id"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
+	UUID        uuid.UUID `json:"uuid"`
+	UserID      uuid.UUID `json:"user_id"`
+	ShortURL    string    `json:"short_url"`
+	OriginalURL string    `json:"original_url"`
 	//IsDeleted   bool      `json:"is_deleted"`
 }
 
