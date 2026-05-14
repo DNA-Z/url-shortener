@@ -9,6 +9,7 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/errors"
 	"github.com/DNA-Z/url-shortener/internal/model"
 	"github.com/DNA-Z/url-shortener/internal/storage"
+	"github.com/google/uuid"
 )
 
 type URLStorage struct {
@@ -74,7 +75,7 @@ func (u *URLStorage) Shorten(originalURL string) (string, error) {
 	return newURL.ShortURL, nil
 }
 
-func (u *URLStorage) GetByID(shortURL string) (string, error) {
+func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (string, error) {
 	log.Printf("Get by id called with param='%s'", shortURL)
 
 	url, err := u.storage.Get(shortURL)
@@ -85,6 +86,19 @@ func (u *URLStorage) GetByID(shortURL string) (string, error) {
 
 	log.Printf("Result URL: %v", url)
 	return url, nil
+}
+
+func (u *URLStorage) GetUserURLsByUserID(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {
+	log.Printf("Get users URLs by user id called with userID='%s'", userID)
+
+	result, err := u.storage.GetUserURLs(userID)
+	if err != nil {
+		log.Printf("Get users URLs by user id failed for ID=%s: %v", result, err)
+		return nil, err
+	}
+
+	log.Printf("Result users URLs by user id: %v", result)
+	return result, nil
 }
 
 func (u *URLStorage) Batch(request []dto.BatchRequestDto, baseAddress string) (response []dto.BatchResponseDto, err error) {

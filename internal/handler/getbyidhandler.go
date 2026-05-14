@@ -26,7 +26,7 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := h.urlService.GetByID(id)
+	result, err := h.urlService.GetOriginURLByShortURL(id)
 
 	if err != nil {
 		http.Error(res, "URL not found", http.StatusBadRequest)
