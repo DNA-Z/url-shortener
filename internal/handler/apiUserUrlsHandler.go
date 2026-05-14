@@ -38,7 +38,7 @@ func (h *URLHandler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	response := make([]dto.UserURLsResponseDto, 0, len(urls))
 	for _, url := range urls {
 		response = append(response, dto.UserURLsResponseDto{
-			ShortURL:    h.baseURL + "/" + url.ShortURL,
+			ShortURL:    h.baseURL + url.ShortURL,
 			OriginalURL: url.OriginalURL,
 		})
 	}
