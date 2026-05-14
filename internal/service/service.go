@@ -9,14 +9,15 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/errors"
 	"github.com/DNA-Z/url-shortener/internal/model"
 	"github.com/DNA-Z/url-shortener/internal/storage"
+	"github.com/google/uuid"
 )
 
-type URL struct {
+type URLStorage struct {
 	storage storage.URLStorage
 	isDB    bool
 }
 
-func NewURL(cfg *config.Options) (*URL, error) {
+func NewURL(cfg *config.Options) (*URLStorage, error) {
 	var store storage.URLStorage
 	var err error
 	isDB := false
@@ -45,7 +46,7 @@ func NewURL(cfg *config.Options) (*URL, error) {
 	return newURLService(store, isDB)
 }
 
-func (u *URL) Shorten(originalURL string) (string, error) {
+func (u *URLStorage) Shorten(originalURL string) (string, error) {
 
 	data, err := u.storage.LoadAll()
 	if err != nil {
@@ -64,7 +65,9 @@ func (u *URL) Shorten(originalURL string) (string, error) {
 		}
 	}
 
-	newURL := model.NewShortURL(originalURL)
+	// TODO: заглушка
+	userID := uuid.Nil
+	newURL, err := model.NewShortURL(originalURL, userID)
 
 	if err := u.storage.Save(newURL); err != nil {
 		return "", err
@@ -72,7 +75,7 @@ func (u *URL) Shorten(originalURL string) (string, error) {
 	return newURL.ShortURL, nil
 }
 
-func (u *URL) GetByID(shortURL string) (string, error) {
+func (u *URLStorage) GetByID(shortURL string) (string, error) {
 	log.Printf("Get by id called with param='%s'", shortURL)
 
 	url, err := u.storage.Get(shortURL)
@@ -85,7 +88,7 @@ func (u *URL) GetByID(shortURL string) (string, error) {
 	return url, nil
 }
 
-func (u *URL) Batch(request []dto.BatchRequestDto, baseAddress string) (response []dto.BatchResponseDto, err error) {
+func (u *URLStorage) Batch(request []dto.BatchRequestDto, baseAddress string) (response []dto.BatchResponseDto, err error) {
 	response = make([]dto.BatchResponseDto, 0, len(request))
 
 	for _, req := range request {
@@ -106,8 +109,8 @@ func (u *URL) Batch(request []dto.BatchRequestDto, baseAddress string) (response
 	return response, err
 }
 
-func newURLService(store storage.URLStorage, isDB bool) (*URL, error) {
-	urlService := &URL{storage: store, isDB: isDB}
+func newURLService(store storage.URLStorage, isDB bool) (*URLStorage, error) {
+	urlService := &URLStorage{storage: store, isDB: isDB}
 
 	if data, err := store.LoadAll(); err == nil {
 		_ = data

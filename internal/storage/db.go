@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/DNA-Z/url-shortener/internal/dto"
 	"github.com/DNA-Z/url-shortener/internal/model"
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
@@ -108,7 +110,49 @@ func (d *DBStorage) LoadAll() (map[string]string, error) {
 	return data, nil
 }
 
-func (d *DBStorage) Save(url *model.URLDto) error {
+func (d *DBStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {
+	query, err := sqlFiles.ReadFile("queries/get_user_urls.sql")
+	if err != nil {
+		log.Printf("failed to read get_user_urls.sql: %v", err)
+		return nil, err
+	}
+
+	stmt, err := d.db.PrepareContext(context.Background(), string(query))
+	if err != nil {
+		log.Printf("failed to GetUserURLs() prepare statement: %v", err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(context.Background(), userID)
+	if err != nil {
+		log.Printf("failed to GetUserURLs() execute statement: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []dto.UserURLsResponseDto
+	for rows.Next() {
+		var short, original string
+		if err := rows.Scan(&short, &original); err != nil {
+			log.Printf("failed to scan user urls: %v", err)
+			return nil, err
+		}
+		result = append(result, dto.UserURLsResponseDto{
+			ShortURL:    short,
+			OriginalURL: original,
+		})
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("error iterating over user urls rows: %v", err)
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (d *DBStorage) Save(url *model.URL) error {
 	query, err := sqlFiles.ReadFile("queries/insert_url.sql")
 	if err != nil {
 		log.Printf("failed to read insert_url.sql: %v", err)
@@ -125,7 +169,7 @@ func (d *DBStorage) Save(url *model.URLDto) error {
 	return d.write(stmt, url)
 }
 
-func (d *DBStorage) Saves(urls []model.URLDto) error {
+func (d *DBStorage) Saves(urls []model.URL) error {
 	tx, err := d.db.Begin()
 	if err != nil {
 		log.Printf("failed to begin transaction: %v", err)
@@ -159,11 +203,13 @@ func (d *DBStorage) Saves(urls []model.URLDto) error {
 	return tx.Commit()
 }
 
-func (d *DBStorage) write(stmt *sql.Stmt, url *model.URLDto) error {
+func (d *DBStorage) write(stmt *sql.Stmt, url *model.URL) error {
 	_, err := stmt.Exec(
 		url.UUID,
 		url.ShortURL,
 		url.OriginalURL,
+		url.UserID,
+		url.IsDeleted,
 	)
 	if err != nil {
 		log.Printf("failed to write() execute statement: %v", err)

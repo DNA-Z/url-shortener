@@ -7,14 +7,16 @@ import (
 	"os"
 	"sync"
 
+	"github.com/DNA-Z/url-shortener/internal/dto"
 	"github.com/DNA-Z/url-shortener/internal/model"
+	"github.com/google/uuid"
 )
 
 type FileStorage struct {
 	file    *os.File
 	writer  *bufio.Writer
 	scanner *bufio.Scanner
-	data    map[string]string
+	data    []model.URL
 	mu      sync.RWMutex
 	path    string
 }
@@ -29,7 +31,7 @@ func NewFileStorage(path string) (*FileStorage, error) {
 		file:    file,
 		writer:  bufio.NewWriter(file),
 		scanner: bufio.NewScanner(file),
-		data:    make(map[string]string),
+		data:    make([]model.URL, 0),
 		path:    path,
 	}
 
@@ -49,16 +51,21 @@ func (f *FileStorage) load() error {
 	f.scanner = bufio.NewScanner(f.file)
 
 	for f.scanner.Scan() {
-		var urlFile model.URLDto
+		var urlFile model.URL
 		if err := json.Unmarshal(f.scanner.Bytes(), &urlFile); err != nil {
 			return err
 		}
-		f.data[urlFile.ShortURL] = urlFile.OriginalURL
+		f.data = append(f.data, model.URL{
+			ShortURL:    urlFile.ShortURL,
+			OriginalURL: urlFile.OriginalURL,
+			UserID:      urlFile.UserID,
+			IsDeleted:   urlFile.IsDeleted,
+		})
 	}
 	return f.scanner.Err()
 }
 
-func (f *FileStorage) Save(url *model.URLDto) error {
+func (f *FileStorage) Save(url *model.URL) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -80,11 +87,16 @@ func (f *FileStorage) Save(url *model.URLDto) error {
 		return err
 	}
 
-	f.data[url.ShortURL] = url.OriginalURL
+	f.data = append(f.data, model.URL{
+		ShortURL:    url.ShortURL,
+		OriginalURL: url.OriginalURL,
+		UserID:      url.UserID,
+		IsDeleted:   url.IsDeleted,
+	})
 	return nil
 }
 
-func (f *FileStorage) Saves(urls []model.URLDto) error {
+func (f *FileStorage) Saves(urls []model.URL) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -104,7 +116,12 @@ func (f *FileStorage) Saves(urls []model.URLDto) error {
 			return err
 		}
 
-		f.data[url.ShortURL] = url.OriginalURL
+		f.data = append(f.data, model.URL{
+			ShortURL:    url.ShortURL,
+			OriginalURL: url.OriginalURL,
+			UserID:      url.UserID,
+			IsDeleted:   url.IsDeleted,
+		})
 	}
 	return f.writer.Flush()
 }
@@ -112,19 +129,45 @@ func (f *FileStorage) Saves(urls []model.URLDto) error {
 func (f *FileStorage) Get(shortURL string) (string, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
-	url, exists := f.data[shortURL]
-	if exists == false {
-		return "", fmt.Errorf("URL not found for short URL: %s", shortURL)
+
+	for _, url := range f.data {
+		if url.ShortURL == shortURL && !url.IsDeleted {
+			return url.OriginalURL, nil
+		}
 	}
-	return url, nil
+	return "", fmt.Errorf("URL not found for short URL: %s", shortURL)
+}
+
+func (f *FileStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	var result []dto.UserURLsResponseDto
+
+	for _, url := range f.data {
+		if url.UserID == userID && !url.IsDeleted {
+			result = append(result, dto.UserURLsResponseDto{
+				ShortURL:    url.ShortURL,
+				OriginalURL: url.OriginalURL,
+			})
+		}
+	}
+
+	if len(result) == 0 {
+		return nil, nil
+	}
+	return result, nil
 }
 
 func (f *FileStorage) LoadAll() (map[string]string, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
+
 	clone := make(map[string]string)
-	for k, v := range f.data {
-		clone[k] = v
+	for _, url := range f.data {
+		if !url.IsDeleted {
+			clone[url.ShortURL] = url.OriginalURL
+		}
 	}
 	return clone, nil
 }

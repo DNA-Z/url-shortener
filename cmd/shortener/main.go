@@ -48,7 +48,7 @@ func getLogger() *zap.Logger {
 	return logger
 }
 
-func getService(cfg *config.Options) *service.URL {
+func getService(cfg *config.Options) *service.URLStorage {
 	urlService, err := service.NewURL(cfg)
 	if err != nil {
 		log.Fatal("Failed to initialize storage: ", err)
