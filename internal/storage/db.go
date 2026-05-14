@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/DNA-Z/url-shortener/internal/model"
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
@@ -204,6 +205,7 @@ func (d *DBStorage) Saves(urls []model.URL) error {
 func (d *DBStorage) write(stmt *sql.Stmt, url *model.URL) error {
 	_, err := stmt.Exec(
 		url.UUID,
+		uuid.Nil,
 		url.ShortURL,
 		url.OriginalURL,
 	)
