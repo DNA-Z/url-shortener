@@ -46,7 +46,7 @@ func NewURL(cfg *config.Options) (*URLStorage, error) {
 	return newURLService(store, isDB)
 }
 
-func (u *URLStorage) Shorten(originalURL string) (string, error) {
+func (u *URLStorage) Shorten(userID uuid.UUID, originalURL string) (string, error) {
 
 	data, err := u.storage.LoadAll()
 	if err != nil {
@@ -65,9 +65,7 @@ func (u *URLStorage) Shorten(originalURL string) (string, error) {
 		}
 	}
 
-	// TODO: заглушка
-	//userID := uuid.Nil
-	newURL, err := model.NewShortURL(originalURL)
+	newURL, err := model.NewShortURL(userID, originalURL)
 
 	if err := u.storage.Save(newURL); err != nil {
 		return "", err

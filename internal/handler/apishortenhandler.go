@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/DNA-Z/url-shortener/internal/auth"
 	"github.com/DNA-Z/url-shortener/internal/dto"
 	cerrors "github.com/DNA-Z/url-shortener/internal/errors"
+	"github.com/google/uuid"
 )
 
 func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, req *http.Request) {
@@ -35,7 +37,17 @@ func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, req *http.Request) {
 	}
 	httpStatus := http.StatusCreated
 
-	shortUrl, err := h.urlService.Shorten(request.URL)
+	userID := uuid.Nil
+
+	if auth.IsAuthEnabled() {
+		if userIDStr, ok := req.Context().Value("userID").(string); ok && userIDStr != "" {
+			if parsed, err := uuid.Parse(userIDStr); err == nil {
+				userID = parsed
+			}
+		}
+	}
+
+	shortUrl, err := h.urlService.Shorten(userID, request.URL)
 
 	var conflictErr *cerrors.ConflictError
 	if err != nil && !errors.As(err, &conflictErr) {

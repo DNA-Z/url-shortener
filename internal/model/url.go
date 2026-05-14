@@ -27,10 +27,10 @@ func generateShortCode() string {
 	return b.String()
 }
 
-func NewShortURL(originalURL string) (*URL, error) {
+func NewShortURL(userID uuid.UUID, originalURL string) (*URL, error) {
 	return &URL{
-		UUID: uuid.New(),
-		//UserID:      userID,
+		UUID:        uuid.New(),
+		UserID:      userID,
 		ShortURL:    generateShortCode(),
 		OriginalURL: originalURL,
 		//IsDeleted:   false,
