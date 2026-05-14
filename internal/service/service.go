@@ -9,7 +9,6 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/errors"
 	"github.com/DNA-Z/url-shortener/internal/model"
 	"github.com/DNA-Z/url-shortener/internal/storage"
-	"github.com/google/uuid"
 )
 
 type URLStorage struct {
@@ -66,8 +65,8 @@ func (u *URLStorage) Shorten(originalURL string) (string, error) {
 	}
 
 	// TODO: заглушка
-	userID := uuid.Nil
-	newURL, err := model.NewShortURL(originalURL, userID)
+	//userID := uuid.Nil
+	newURL, err := model.NewShortURL(originalURL)
 
 	if err := u.storage.Save(newURL); err != nil {
 		return "", err
