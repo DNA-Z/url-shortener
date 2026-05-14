@@ -3,8 +3,7 @@ CREATE TABLE urls (
                         id uuid PRIMARY KEY,
                         user_id uuid NULL,
                         short_url VARCHAR(255) NULL,
-                        original_url TEXT NULL,
-                        id_deleted BOOLEAN DEFAULT FALSE
+                        original_url TEXT NULL
 );
 
 CREATE INDEX idx_user_id ON urls(user_id);
