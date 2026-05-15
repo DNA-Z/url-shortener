@@ -38,16 +38,12 @@ func main() {
 	r.Get("/ping", pingHandler.GetDbPing)
 
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.PublicAuthMiddleware)
+		r.Use(middleware.AuthMiddleware)
 		r.Get("/{id}", urlHandler.GetByIDGet)
+		r.Get("/api/user/urls", urlHandler.GetUserURLs)
 		r.Post("/", urlHandler.ShortenerPost)
 		r.Post("/api/shorten", urlHandler.ShortenURLPost)
 		r.Post("/api/shorten/batch", urlHandler.ShortenBatchPost)
-	})
-
-	r.Group(func(r chi.Router) {
-		r.Use(middleware.PublicAuthMiddleware)
-		r.Get("/api/user/urls", urlHandler.GetUserURLs)
 	})
 
 	log.Printf("Сервер запущен на %s\n", cfg.ServerAddress)
