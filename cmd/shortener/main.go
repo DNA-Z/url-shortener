@@ -46,7 +46,7 @@ func main() {
 	})
 
 	r.Group(func(r chi.Router) {
-		r.Use(middleware.AuthMiddleware)
+		r.Use(middleware.PublicAuthMiddleware)
 		r.Get("/api/user/urls", urlHandler.GetUserURLs)
 	})
 
