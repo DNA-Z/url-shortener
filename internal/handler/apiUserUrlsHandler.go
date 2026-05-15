@@ -16,7 +16,7 @@ func (h *URLHandler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("userID").(string)
 	if !ok {
 		cookie, err := r.Cookie("user_jwt")
-		if err == nil && cookie.Value != "" {
+		if err != nil && cookie.Value == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
