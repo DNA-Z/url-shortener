@@ -39,7 +39,7 @@ func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	userID := uuid.Nil
+	var userID uuid.UUID
 
 	if auth.IsAuthEnabled() {
 		if userIDStr, ok := req.Context().Value("userID").(string); ok && userIDStr != "" {

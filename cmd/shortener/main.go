@@ -34,6 +34,8 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.LoggerMiddleware)
 	r.Use(middleware.GzipMiddleware)
+	r.Use(middleware.AuthMiddleware)
+
 	r.Get("/ping", pingHandler.GetDbPing)
 	r.Get("/{id}", urlHandler.GetByIDGet)
 	r.Get("/api/user/urls", urlHandler.GetUserURLs)

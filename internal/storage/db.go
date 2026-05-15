@@ -206,7 +206,7 @@ func (d *DBStorage) Saves(urls []model.URL) error {
 func (d *DBStorage) write(stmt *sql.Stmt, url *model.URL) error {
 	_, err := stmt.Exec(
 		url.UUID,
-		uuid.Nil,
+		url.UserID,
 		url.ShortURL,
 		url.OriginalURL,
 	)

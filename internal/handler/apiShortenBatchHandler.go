@@ -28,7 +28,7 @@ func (h *URLHandler) ShortenBatchPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := uuid.Nil
+	var userID uuid.UUID
 
 	if auth.IsAuthEnabled() {
 		if userIDStr, ok := r.Context().Value("userID").(string); ok && userIDStr != "" {
