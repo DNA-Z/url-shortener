@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/DNA-Z/url-shortener/internal/auth"
@@ -24,15 +25,37 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		userID, err := GetUserIDFromCookie(r)
 
 		if err != nil {
-			newUserID := auth.GenerateUserID()
-			if err := SetUserCookie(w, newUserID); err != nil {
-				http.Error(w, "Failed to create session", http.StatusInternalServerError)
-				return
-			}
-			userID = newUserID
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
+			return
 		}
 
 		ctx := context.WithValue(r.Context(), "userID", userID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func PublicAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !authEnabled {
+			ctx := context.WithValue(r.Context(), "userID", "")
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		userId, err := GetUserIDFromCookie(r)
+
+		if err != nil {
+			newUserID := auth.GenerateUserID()
+			if err := SetUserCookie(w, newUserID); err != nil {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+			userId = newUserID
+		}
+
+		ctx := context.WithValue(r.Context(), "userID", userId)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
