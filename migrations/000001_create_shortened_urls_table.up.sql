@@ -4,6 +4,7 @@ CREATE TABLE urls (
                         user_id UUID NULL,
                         short_url VARCHAR(255) NULL,
                         original_url TEXT NULL
+                        is_deleted BOOLEAN DEFAULT FALSE
 );
 
 CREATE INDEX idx_user_id ON urls(user_id);
