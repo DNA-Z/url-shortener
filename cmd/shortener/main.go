@@ -44,6 +44,7 @@ func main() {
 		r.Post("/", urlHandler.ShortenerPost)
 		r.Post("/api/shorten", urlHandler.ShortenURLPost)
 		r.Post("/api/shorten/batch", urlHandler.ShortenBatchPost)
+		r.Delete("/api/user/urls", urlHandler.DeleteUserURLs)
 	})
 
 	log.Printf("Сервер запущен на %s\n", cfg.ServerAddress)
