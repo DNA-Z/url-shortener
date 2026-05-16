@@ -105,6 +105,24 @@ func (u *URLStorage) GetUserURLsByUserID(userIDStr string) ([]dto.UserURLsRespon
 	return result, nil
 }
 
+func (u *URLStorage) DeleteUserURLs(userIDStr string) error {
+	log.Printf("Delete users URLs called with userID='%s'", userIDStr)
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		log.Print("Invalid user ID format")
+		return err
+	}
+
+	result, err := u.storage.GetUserURLs(userID)
+	if err != nil {
+		log.Printf("Get users URLs by user id failed for ID=%s: %v", result, err)
+		return err
+	}
+
+	return nil
+}
+
 func (u *URLStorage) Batch(userID uuid.UUID, request []dto.BatchRequestDto, baseAddress string) (response []dto.BatchResponseDto, err error) {
 	response = make([]dto.BatchResponseDto, 0, len(request))
 

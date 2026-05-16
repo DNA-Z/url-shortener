@@ -12,7 +12,7 @@ type URL struct {
 	UserID      uuid.UUID `json:"user_id"`
 	ShortURL    string    `json:"short_url"`
 	OriginalURL string    `json:"original_url"`
-	//IsDeleted   bool      `json:"is_deleted"`
+	IsDeleted   bool      `json:"is_deleted"`
 }
 
 func generateShortCode() string {
@@ -33,6 +33,6 @@ func NewShortURL(userID uuid.UUID, originalURL string) (*URL, error) {
 		UserID:      userID,
 		ShortURL:    generateShortCode(),
 		OriginalURL: originalURL,
-		//IsDeleted:   false,
+		IsDeleted:   false,
 	}, nil
 }

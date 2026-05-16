@@ -25,12 +25,11 @@ func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 	}
 
 	body, err := io.ReadAll(req.Body)
-	req.Body.Close()
-
 	if err != nil {
 		http.Error(res, "Error reading request body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
+	req.Body.Close()
 
 	url := string(body)
 
