@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 )
 
@@ -25,22 +26,21 @@ func (h *URLHandler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	var request []string
-	if err := json.Unmarshal(body, &request); err != nil {
+	var shortURLs []string
+	if err := json.Unmarshal(body, &shortURLs); err != nil {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
-	if len(request) == 0 {
+	if len(shortURLs) == 0 {
 		http.Error(w, "URL IDs list is empty", http.StatusBadRequest)
 		return
 	}
 
-	err = h.urlService.DeleteUserURLs(userID)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+	go func(usrID string, urls []string) {
+		if err := h.urlService.DeleteUserURLs(userID, shortURLs); err != nil {
+			log.Printf("Failed to delete URLs: %v", err)
+		}
+	}(userID, shortURLs)
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusAccepted)
 }

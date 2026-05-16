@@ -105,7 +105,7 @@ func (u *URLStorage) GetUserURLsByUserID(userIDStr string) ([]dto.UserURLsRespon
 	return result, nil
 }
 
-func (u *URLStorage) DeleteUserURLs(userIDStr string) error {
+func (u *URLStorage) DeleteUserURLs(userIDStr string, shortURLs []string) error {
 	log.Printf("Delete users URLs called with userID='%s'", userIDStr)
 
 	userID, err := uuid.Parse(userIDStr)
@@ -114,9 +114,9 @@ func (u *URLStorage) DeleteUserURLs(userIDStr string) error {
 		return err
 	}
 
-	result, err := u.storage.GetUserURLs(userID)
+	err = u.storage.DeleteUserURLs(userID, shortURLs)
 	if err != nil {
-		log.Printf("Get users URLs by user id failed for ID=%s: %v", result, err)
+		log.Printf("Delete users URLs failed: %v", err)
 		return err
 	}
 
