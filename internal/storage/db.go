@@ -152,6 +152,31 @@ func (d *DBStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, er
 	return result, nil
 }
 
+func (d *DBStorage) DeleteUserURLs(userID uuid.UUID, shortURLs []string) error {
+	query, err := sqlFiles.ReadFile("queries/delete_user_urls.sql")
+	if err != nil {
+		log.Printf("failed to read delete_user_urls.sql: %v", err)
+		return err
+	}
+
+	stmt, err := d.db.PrepareContext(context.Background(), string(query))
+	if err != nil {
+		log.Printf("failed to DeleteUserURLs() prepare statement: %v", err)
+		return err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.ExecContext(context.Background(), userID, shortURLs)
+	if err != nil {
+		log.Printf("failed to DeleteUserURLs() execute statement: %v", err)
+		return err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	log.Printf("DeleteUserURLs() deleted %d row(s) from users %s", rowsAffected, userID)
+	return nil
+}
+
 func (d *DBStorage) Save(url *model.URL) error {
 	query, err := sqlFiles.ReadFile("queries/insert_url.sql")
 	if err != nil {

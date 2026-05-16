@@ -12,4 +12,5 @@ type URLStorage interface {
 	Get(shortURL string) (string, error)
 	GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, error)
 	LoadAll() (map[string]string, error)
+	DeleteUserURLs(userID uuid.UUID, shortURLs []string) error
 }

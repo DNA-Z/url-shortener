@@ -28,7 +28,7 @@ func (m *MemoryStorage) Save(url *model.URL) error {
 		UserID:      url.UserID,
 		ShortURL:    url.ShortURL,
 		OriginalURL: url.OriginalURL,
-		//IsDeleted:   false,
+		IsDeleted:   false,
 	})
 
 	return nil
@@ -43,7 +43,7 @@ func (m *MemoryStorage) Saves(urls []model.URL) error {
 			UserID:      url.UserID,
 			ShortURL:    url.ShortURL,
 			OriginalURL: url.OriginalURL,
-			//IsDeleted:   false,
+			IsDeleted:   false,
 		})
 	}
 
@@ -69,7 +69,7 @@ func (m *MemoryStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto
 
 	var result []dto.UserURLsResponseDto
 	for _, entry := range m.data {
-		if entry.UserID == userID {
+		if entry.UserID == userID && !entry.IsDeleted {
 			result = append(result, dto.UserURLsResponseDto{
 				ShortURL:    entry.ShortURL,
 				OriginalURL: entry.OriginalURL,
@@ -80,15 +80,33 @@ func (m *MemoryStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto
 	return result, nil
 }
 
+func (m *MemoryStorage) DeleteUserURLs(userID uuid.UUID, shortURLs []string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	urlsToDelete := make(map[string]bool)
+	for _, shortURL := range shortURLs {
+		urlsToDelete[shortURL] = true
+	}
+
+	for i := range m.data {
+		if m.data[i].UserID == userID && urlsToDelete[m.data[i].ShortURL] {
+			m.data[i].IsDeleted = true
+		}
+	}
+
+	return nil
+}
+
 func (m *MemoryStorage) LoadAll() (map[string]string, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	clone := make(map[string]string)
 	for _, url := range m.data {
-		//if !url.IsDeleted {
-		clone[url.ShortURL] = url.OriginalURL
-		//}
+		if !url.IsDeleted {
+			clone[url.ShortURL] = url.OriginalURL
+		}
 	}
 	return clone, nil
 }

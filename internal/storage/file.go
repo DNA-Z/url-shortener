@@ -59,7 +59,7 @@ func (f *FileStorage) load() error {
 			ShortURL:    urlFile.ShortURL,
 			OriginalURL: urlFile.OriginalURL,
 			UserID:      urlFile.UserID,
-			//IsDeleted:   urlFile.IsDeleted,
+			IsDeleted:   urlFile.IsDeleted,
 		})
 	}
 	return f.scanner.Err()
@@ -91,7 +91,7 @@ func (f *FileStorage) Save(url *model.URL) error {
 		ShortURL:    url.ShortURL,
 		OriginalURL: url.OriginalURL,
 		UserID:      url.UserID,
-		//IsDeleted:   url.IsDeleted,
+		IsDeleted:   url.IsDeleted,
 	})
 	return nil
 }
@@ -111,7 +111,7 @@ func (f *FileStorage) Saves(urls []model.URL) error {
 			return err
 		}
 
-		err = f.writer.WriteByte('n')
+		err = f.writer.WriteByte('\n')
 		if err != nil {
 			return err
 		}
@@ -120,7 +120,7 @@ func (f *FileStorage) Saves(urls []model.URL) error {
 			ShortURL:    url.ShortURL,
 			OriginalURL: url.OriginalURL,
 			UserID:      url.UserID,
-			//IsDeleted:   url.IsDeleted,
+			IsDeleted:   url.IsDeleted,
 		})
 	}
 	return f.writer.Flush()
@@ -145,7 +145,7 @@ func (f *FileStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, 
 	var result []dto.UserURLsResponseDto
 
 	for _, url := range f.data {
-		if url.UserID == userID {
+		if url.UserID == userID && !url.IsDeleted {
 			result = append(result, dto.UserURLsResponseDto{
 				ShortURL:    url.ShortURL,
 				OriginalURL: url.OriginalURL,
@@ -159,15 +159,60 @@ func (f *FileStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, 
 	return result, nil
 }
 
+func (f *FileStorage) DeleteUserURLs(userID uuid.UUID, shortURLs []string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	urlsToDelete := make(map[string]bool)
+	for _, shortURL := range shortURLs {
+		urlsToDelete[shortURL] = true
+	}
+
+	for i, url := range f.data {
+		if url.UserID == userID && urlsToDelete[url.ShortURL] && !url.IsDeleted {
+			f.data[i].IsDeleted = true
+		}
+	}
+
+	return f.saveAllToFile()
+}
+
 func (f *FileStorage) LoadAll() (map[string]string, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 
 	clone := make(map[string]string)
 	for _, url := range f.data {
-		//if !url.IsDeleted {
-		clone[url.ShortURL] = url.OriginalURL
-		//}
+		if !url.IsDeleted {
+			clone[url.ShortURL] = url.OriginalURL
+		}
 	}
 	return clone, nil
+}
+
+func (f *FileStorage) saveAllToFile() error {
+	if err := f.file.Truncate(0); err != nil {
+		return err
+	}
+	if _, err := f.file.Seek(0, 0); err != nil {
+		return err
+	}
+
+	f.writer = bufio.NewWriter(f.file)
+
+	for _, url := range f.data {
+		data, err := json.Marshal(url)
+		if err != nil {
+			return err
+		}
+
+		if _, err := f.writer.Write(data); err != nil {
+			return err
+		}
+		if err := f.writer.WriteByte('\n'); err != nil {
+			return err
+		}
+	}
+
+	return f.writer.Flush()
 }
