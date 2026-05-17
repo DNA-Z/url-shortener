@@ -78,11 +78,11 @@ func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (dto.GetByIdDto, er
 
 	url, err := u.storage.Get(shortURL)
 	if err != nil {
-		log.Printf("Get URL failed for ID=%s: %v", url, err)
+		log.Printf("Get URL failed for ID=%s: %v", shortURL, err)
 		return dto.GetByIdDto{}, err
 	}
 
-	log.Printf("Result URL: %v", url)
+	log.Printf("Result URL: %v", url.OriginalUrl)
 	return url, nil
 }
 
