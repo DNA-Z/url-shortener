@@ -57,8 +57,8 @@ func (m *MemoryStorage) Get(shortURL string) (dto.GetByIdDto, error) {
 	for _, url := range m.data {
 		if url.ShortURL == shortURL {
 			return dto.GetByIdDto{
-				ShortURL:  url.ShortURL,
-				IsDeleted: url.IsDeleted,
+				OriginalUrl: url.OriginalURL,
+				IsDeleted:   url.IsDeleted,
 			}, nil
 		}
 	}

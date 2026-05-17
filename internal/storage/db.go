@@ -61,13 +61,13 @@ func (d *DBStorage) Get(shortURL string) (dto.GetByIdDto, error) {
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRowContext(context.Background(), shortURL).Scan(&originalURL.ShortURL, &originalURL.IsDeleted)
+	err = stmt.QueryRowContext(context.Background(), shortURL).Scan(&originalURL.OriginalUrl, &originalURL.IsDeleted)
 	if err != nil {
 		log.Printf("failed to get() execute statement: %v", err)
 		return originalURL, err
 	}
 
-	log.Printf("originalURL: %s", originalURL)
+	log.Printf("Original URL: %s", originalURL)
 	return originalURL, nil
 }
 
