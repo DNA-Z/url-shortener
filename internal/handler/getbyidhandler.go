@@ -35,6 +35,6 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, "URL is gone", http.StatusGone)
 	}
 
-	res.Header().Set("Location", url.ShortURL)
+	res.Header().Set("Location", url.OriginalUrl)
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
