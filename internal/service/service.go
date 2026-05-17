@@ -73,13 +73,13 @@ func (u *URLStorage) Shorten(userID uuid.UUID, originalURL string) (string, erro
 	return newURL.ShortURL, nil
 }
 
-func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (string, error) {
+func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (dto.GetByIdDto, error) {
 	log.Printf("Get by id called with param='%s'", shortURL)
 
 	url, err := u.storage.Get(shortURL)
 	if err != nil {
 		log.Printf("Get URL failed for ID=%s: %v", url, err)
-		return "", err
+		return dto.GetByIdDto{}, err
 	}
 
 	log.Printf("Result URL: %v", url)

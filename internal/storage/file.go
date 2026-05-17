@@ -126,16 +126,19 @@ func (f *FileStorage) Saves(urls []model.URL) error {
 	return f.writer.Flush()
 }
 
-func (f *FileStorage) Get(shortURL string) (string, error) {
+func (f *FileStorage) Get(shortURL string) (dto.GetByIdDto, error) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 
 	for _, url := range f.data {
 		if url.ShortURL == shortURL {
-			return url.OriginalURL, nil
+			return dto.GetByIdDto{
+				ShortURL:  url.ShortURL,
+				IsDeleted: url.IsDeleted,
+			}, nil
 		}
 	}
-	return "", fmt.Errorf("URL not found for short URL: %s", shortURL)
+	return dto.GetByIdDto{}, fmt.Errorf("URL not found for short URL: %s", shortURL)
 }
 
 func (f *FileStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {

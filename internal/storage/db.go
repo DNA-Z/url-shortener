@@ -45,26 +45,26 @@ func NewDBStorage(connectionString string) (*DBStorage, error) {
 	return &DBStorage{db: db}, nil
 }
 
-func (d *DBStorage) Get(shortURL string) (string, error) {
+func (d *DBStorage) Get(shortURL string) (dto.GetByIdDto, error) {
+	var originalURL dto.GetByIdDto
+
 	query, err := sqlFiles.ReadFile("queries/get_original_url.sql")
 	if err != nil {
 		log.Printf("failed to read get_original_url.sql: %v", err)
-		return "", err
+		return originalURL, err
 	}
-
-	var originalURL string
 
 	stmt, err := d.db.PrepareContext(context.Background(), string(query))
 	if err != nil {
 		log.Printf("failed to get() prepare statement: %v", err)
-		return "", err
+		return originalURL, err
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRowContext(context.Background(), shortURL).Scan(&originalURL)
+	err = stmt.QueryRowContext(context.Background(), shortURL).Scan(&originalURL.ShortURL, &originalURL.IsDeleted)
 	if err != nil {
 		log.Printf("failed to get() execute statement: %v", err)
-		return "", err
+		return originalURL, err
 	}
 
 	log.Printf("originalURL: %s", originalURL)

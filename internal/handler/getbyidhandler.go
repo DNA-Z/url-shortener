@@ -26,13 +26,15 @@ func (h *URLHandler) GetByIDGet(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := h.urlService.GetOriginURLByShortURL(id)
-
+	url, err := h.urlService.GetOriginURLByShortURL(id)
 	if err != nil {
 		http.Error(res, "URL not found", http.StatusBadRequest)
 		return
 	}
+	if url.IsDeleted {
+		http.Error(res, "URL is gone", http.StatusGone)
+	}
 
-	res.Header().Set("Location", result)
+	res.Header().Set("Location", url.ShortURL)
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
