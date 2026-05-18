@@ -7,6 +7,10 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/auth"
 )
 
+type contextKey string
+
+const userIDKey contextKey = "userID"
+
 var authEnabled bool
 
 func InitAuthMiddleware(enabled bool) {
@@ -16,7 +20,7 @@ func InitAuthMiddleware(enabled bool) {
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !authEnabled {
-			ctx := context.WithValue(r.Context(), "userID", "")
+			ctx := context.WithValue(r.Context(), userIDKey, "")
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -32,7 +36,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			userId = newUserID
 		}
 
-		ctx := context.WithValue(r.Context(), "userID", userId)
+		ctx := context.WithValue(r.Context(), userIDKey, userId)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
