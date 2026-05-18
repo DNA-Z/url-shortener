@@ -41,6 +41,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func GetUserIDFromContext(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value(userIDKey).(string)
+	return userID, ok
+}
+
 func GetUserIDFromCookie(r *http.Request) (string, error) {
 	cookie, err := r.Cookie("user_jwt")
 	if err != nil {

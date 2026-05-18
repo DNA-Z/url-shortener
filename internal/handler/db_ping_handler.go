@@ -25,9 +25,9 @@ func NewDBPingHandler(cfg *config.Options, db *sql.DB) *DBPingHandler {
 	}
 }
 
-func (h *DBPingHandler) GetDbPing(res http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodGet {
-		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)
+func (h *DBPingHandler) GetDbPing(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Only GET requests are allowed!", http.StatusBadRequest)
 		return
 	}
 
@@ -35,9 +35,9 @@ func (h *DBPingHandler) GetDbPing(res http.ResponseWriter, req *http.Request) {
 	defer cancel()
 
 	if err := h.db.PingContext(ctx); err != nil {
-		http.Error(res, "Database connection failed", http.StatusInternalServerError)
+		http.Error(w, "Database connection failed", http.StatusInternalServerError)
 		return
 	}
 
-	res.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusOK)
 }

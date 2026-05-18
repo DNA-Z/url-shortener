@@ -9,41 +9,44 @@ import (
 
 	"github.com/DNA-Z/url-shortener/internal/auth"
 	cerrors "github.com/DNA-Z/url-shortener/internal/errors"
+	"github.com/DNA-Z/url-shortener/internal/middleware"
 	"github.com/google/uuid"
 )
 
-func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
+func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
 	var baseAddress = h.baseURL
 
 	if !strings.HasSuffix(baseAddress, "/") {
 		baseAddress += "/"
 	}
 
-	if req.Method != http.MethodPost {
-		http.Error(res, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
 		return
 	}
 
-	body, err := io.ReadAll(req.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(res, "Error reading request body: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "Error reading request body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	req.Body.Close()
+	r.Body.Close()
 
 	url := string(body)
 
 	if url == "" {
-		http.Error(res, "Request url is required", http.StatusBadRequest)
+		http.Error(w, "Request url is required", http.StatusBadRequest)
 		return
 	}
 
 	var userID uuid.UUID
 
 	if auth.IsAuthEnabled() {
-		if userIDStr, ok := req.Context().Value("userID").(string); ok && userIDStr != "" {
-			if parsed, err := uuid.Parse(userIDStr); err == nil {
-				userID = parsed
+		if auth.IsAuthEnabled() {
+			userID, ok := middleware.GetUserIDFromContext(r.Context())
+			if !ok || userID == "" {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
 			}
 		}
 	}
@@ -53,7 +56,7 @@ func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 	httpStatus := http.StatusCreated
 	var conflictErr *cerrors.ConflictError
 	if err != nil && !errors.As(err, &conflictErr) {
-		http.Error(res, "Error shortening URL: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "Error shortening URL: "+err.Error(), http.StatusBadRequest)
 	}
 	if errors.As(err, &conflictErr) {
 		httpStatus = http.StatusConflict
@@ -62,6 +65,6 @@ func (h *URLHandler) ShortenerPost(res http.ResponseWriter, req *http.Request) {
 
 	result := baseAddress + shortURL
 
-	res.WriteHeader(httpStatus)
-	res.Write([]byte(result))
+	w.WriteHeader(httpStatus)
+	w.Write([]byte(result))
 }

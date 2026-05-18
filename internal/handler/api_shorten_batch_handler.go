@@ -8,6 +8,7 @@ import (
 
 	"github.com/DNA-Z/url-shortener/internal/auth"
 	"github.com/DNA-Z/url-shortener/internal/dto"
+	"github.com/DNA-Z/url-shortener/internal/middleware"
 	"github.com/google/uuid"
 )
 
@@ -31,10 +32,10 @@ func (h *URLHandler) ShortenBatchPost(w http.ResponseWriter, r *http.Request) {
 	var userID uuid.UUID
 
 	if auth.IsAuthEnabled() {
-		if userIDStr, ok := r.Context().Value("userID").(string); ok && userIDStr != "" {
-			if parsed, err := uuid.Parse(userIDStr); err == nil {
-				userID = parsed
-			}
+		userID, ok := middleware.GetUserIDFromContext(r.Context())
+		if !ok || userID == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
 		}
 	}
 

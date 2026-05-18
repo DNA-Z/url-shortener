@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/DNA-Z/url-shortener/internal/dto"
+	"github.com/DNA-Z/url-shortener/internal/middleware"
 )
 
 func (h *URLHandler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
@@ -13,7 +14,7 @@ func (h *URLHandler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, ok := r.Context().Value("userID").(string)
+	userID, ok := middleware.GetUserIDFromContext(r.Context())
 	if !ok || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
