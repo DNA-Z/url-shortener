@@ -19,7 +19,7 @@ func NewOptions() *Options {
 		BaseURL:          "http://localhost:8080/",
 		FileStoragePath:  "short_url",
 		ConnectionString: "",
-		SecretKey:        "",
+		SecretKey:        "superSecretKey",
 	}
 }
 
