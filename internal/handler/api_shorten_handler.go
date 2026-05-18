@@ -38,15 +38,20 @@ func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, r *http.Request) {
 	}
 	httpStatus := http.StatusCreated
 
-	userID := uuid.Nil
+	userID := uuid.Nil // Значение по умолчанию
 
 	if auth.IsAuthEnabled() {
-		if auth.IsAuthEnabled() {
-			userID, ok := middleware.GetUserIDFromContext(r.Context())
-			if !ok || userID == "" {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
-				return
-			}
+		userIDStr, ok := middleware.GetUserIDFromContext(r.Context())
+		if !ok || userIDStr == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		var err error
+		userID, err = uuid.Parse(userIDStr)
+		if err != nil {
+			http.Error(w, "Invalid user ID", http.StatusInternalServerError)
+			return
 		}
 	}
 
