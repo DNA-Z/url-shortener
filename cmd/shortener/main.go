@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"log"
 	"net/http"
 
@@ -9,6 +11,7 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/handler"
 	"github.com/DNA-Z/url-shortener/internal/middleware"
 	"github.com/DNA-Z/url-shortener/internal/service"
+	"github.com/DNA-Z/url-shortener/internal/storage"
 	"github.com/go-chi/chi/v5"
 
 	"go.uber.org/zap"
@@ -25,9 +28,10 @@ func main() {
 	middleware.InitAuthMiddleware(auth.IsAuthEnabled())
 
 	urlService := getService(cfg)
+	sqlDb := getDB()
 
 	urlHandler := handler.NewURLHandler(urlService, cfg.ServerAddress, cfg.BaseURL)
-	pingHandler := handler.NewDBPingHandler(cfg)
+	pingHandler := handler.NewDBPingHandler(cfg, sqlDb)
 
 	middleware.InitLogger(logger)
 
@@ -66,4 +70,14 @@ func getService(cfg *config.Options) *service.URLStorage {
 		log.Fatal("Failed to initialize storage: ", err)
 	}
 	return urlService
+}
+
+func getDB() *sql.DB {
+	ctx := context.Background()
+	database, err := storage.DbConnect(ctx, "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable")
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+
+	return database
 }
