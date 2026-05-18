@@ -37,7 +37,7 @@ func (h *URLHandler) DeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func(usrID string, urls []string) {
-		if err := h.urlService.DeleteUserURLs(userID, shortURLs); err != nil {
+		if err := h.urlService.DeleteUserURLs(usrID, urls); err != nil {
 			log.Printf("Failed to delete URLs: %v", err)
 		}
 	}(userID, shortURLs)
