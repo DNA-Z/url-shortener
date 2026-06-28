@@ -1,0 +1,28 @@
+package audit
+
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type AuditEvent struct {
+	Timestamp int64     `json:"ts"`
+	Action    Action    `json:"action"`
+	UserID    uuid.UUID `json:"user_id"`
+	URL       string    `json:"url"`
+}
+
+func NewEvent(action Action, userID uuid.UUID, url string) AuditEvent {
+	return AuditEvent{
+		Timestamp: time.Now().Unix(),
+		Action:    action,
+		UserID:    userID,
+		URL:       url,
+	}
+}
+
+func (e AuditEvent) ToJSON() ([]byte, error) {
+	return json.Marshal(e)
+}
