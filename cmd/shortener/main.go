@@ -31,10 +31,10 @@ func main() {
 	urlService := getService(cfg)
 	sqlDB := getDB()
 
-	auditPublisher := getAuditPublisher(cfg)
-	defer auditPublisher.Close()
+	//auditPublisher := getAuditPublisher(cfg)
+	//defer auditPublisher.Close()
 
-	urlHandler := handler.NewURLHandler(urlService, cfg.ServerAddress, cfg.BaseURL, auditPublisher)
+	urlHandler := handler.NewURLHandler(urlService, cfg.ServerAddress, cfg.BaseURL)
 	pingHandler := handler.NewDBPingHandler(cfg, sqlDB)
 
 	middleware.InitLogger(logger)
@@ -42,7 +42,7 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.LoggerMiddleware)
 	r.Use(middleware.GzipMiddleware)
-	r.Use(middleware.AuditMiddleware(auditPublisher))
+	//r.Use(middleware.AuditMiddleware(auditPublisher))
 
 	r.Get("/ping", pingHandler.GetDbPing)
 
