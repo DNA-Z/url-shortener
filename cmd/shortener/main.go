@@ -34,7 +34,7 @@ func main() {
 	auditPublisher := getAuditPublisher(cfg)
 	defer auditPublisher.Close()
 
-	urlHandler := handler.NewURLHandler(urlService, cfg.ServerAddress, cfg.BaseURL)
+	urlHandler := handler.NewURLHandler(urlService, cfg.ServerAddress, cfg.BaseURL, auditPublisher)
 	pingHandler := handler.NewDBPingHandler(cfg, sqlDB)
 
 	middleware.InitLogger(logger)
