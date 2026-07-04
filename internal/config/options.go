@@ -11,8 +11,8 @@ type Options struct {
 	FileStoragePath  string
 	ConnectionString string
 	SecretKey        string
-	AuditFile        string
-	AuditURL         string
+	//AuditFile        string
+	//AuditURL         string
 }
 
 func NewOptions() *Options {
@@ -111,20 +111,20 @@ func (o *Options) SecretKeySet(secretKeyFlag *string) {
 	}
 }
 
-func (o *Options) AuditFileSet(auditFileFlag *string) {
-	switch {
-	case os.Getenv("AUDIT_FILE") != "":
-		o.AuditFile = os.Getenv("AUDIT_FILE")
-	case *auditFileFlag != o.AuditFile:
-		o.AuditFile = *auditFileFlag
-	}
-}
-
-func (o *Options) AuditURLSet(auditURLFlag *string) {
-	switch {
-	case os.Getenv("AUDIT_URL") != "":
-		o.AuditURL = os.Getenv("AUDIT_URL")
-	case *auditURLFlag != o.AuditURL:
-		o.AuditURL = *auditURLFlag
-	}
-}
+//func (o *Options) AuditFileSet(auditFileFlag *string) {
+//	switch {
+//	case os.Getenv("AUDIT_FILE") != "":
+//		o.AuditFile = os.Getenv("AUDIT_FILE")
+//	case *auditFileFlag != o.AuditFile:
+//		o.AuditFile = *auditFileFlag
+//	}
+//}
+//
+//func (o *Options) AuditURLSet(auditURLFlag *string) {
+//	switch {
+//	case os.Getenv("AUDIT_URL") != "":
+//		o.AuditURL = os.Getenv("AUDIT_URL")
+//	case *auditURLFlag != o.AuditURL:
+//		o.AuditURL = *auditURLFlag
+//	}
+//}
