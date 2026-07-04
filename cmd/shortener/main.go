@@ -42,7 +42,10 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.LoggerMiddleware)
 	r.Use(middleware.GzipMiddleware)
-	r.Use(middleware.AuditMiddleware(auditPublisher))
+
+	if auditPublisher != nil {
+		r.Use(middleware.AuditMiddleware(auditPublisher))
+	}
 
 	r.Get("/ping", pingHandler.GetDbPing)
 
