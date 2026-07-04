@@ -29,13 +29,13 @@ func main() {
 	middleware.InitAuthMiddleware(auth.IsAuthEnabled())
 
 	urlService := getService(cfg)
-	sqlDb := getDB()
+	sqlDB := getDB()
 
 	auditPublisher := getAuditPublisher(cfg)
 	defer auditPublisher.Close()
 
 	urlHandler := handler.NewURLHandler(urlService, cfg.ServerAddress, cfg.BaseURL, auditPublisher)
-	pingHandler := handler.NewDBPingHandler(cfg, sqlDb)
+	pingHandler := handler.NewDBPingHandler(cfg, sqlDB)
 
 	middleware.InitLogger(logger)
 
@@ -78,7 +78,7 @@ func getService(cfg *config.Options) *service.URLStorage {
 
 func getDB() *sql.DB {
 	ctx := context.Background()
-	database, err := storage.DbConnect(ctx, "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable")
+	database, err := storage.DBConnect(ctx, "host=localhost port=5432 user=postgres password=lightning dbname=short_url sslmode=disable")
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}

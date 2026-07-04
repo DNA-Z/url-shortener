@@ -10,7 +10,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func DbConnect(ctx context.Context, connectionString string) (*sql.DB, error) {
+func DBConnect(ctx context.Context, connectionString string) (*sql.DB, error) {
 
 	db, err := sql.Open("pgx", connectionString)
 	if err != nil {

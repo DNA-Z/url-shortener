@@ -50,20 +50,20 @@ func (m *MemoryStorage) Saves(urls []model.URL) error {
 	return nil
 }
 
-func (m *MemoryStorage) Get(shortURL string) (dto.GetByIdDto, error) {
+func (m *MemoryStorage) Get(shortURL string) (dto.GetByIDDto, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	for _, url := range m.data {
 		if url.ShortURL == shortURL {
-			return dto.GetByIdDto{
+			return dto.GetByIDDto{
 				OriginalUrl: url.OriginalURL,
 				IsDeleted:   url.IsDeleted,
 			}, nil
 		}
 	}
 
-	return dto.GetByIdDto{}, fmt.Errorf("URL not found for short URL: %s", shortURL)
+	return dto.GetByIDDto{}, fmt.Errorf("URL not found for short URL: %s", shortURL)
 }
 
 func (m *MemoryStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {

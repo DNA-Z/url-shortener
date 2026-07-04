@@ -25,7 +25,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		userId, err := GetUserIDFromCookie(r)
+		userID, err := GetUserIDFromCookie(r)
 
 		if err != nil {
 			newUserID := auth.GenerateUserID()
@@ -33,10 +33,10 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
-			userId = newUserID
+			userID = newUserID
 		}
 
-		ctx := context.WithValue(r.Context(), userIDKey, userId)
+		ctx := context.WithValue(r.Context(), userIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -73,7 +73,7 @@ func SetUserCookie(w http.ResponseWriter, userID string) error {
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
-		MaxAge:   int(auth.TOKEN_EXP.Seconds()),
+		MaxAge:   int(auth.TokenExpiration.Seconds()),
 	})
 
 	return nil

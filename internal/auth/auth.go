@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const TOKEN_EXP = time.Hour * 3
+const TokenExpiration = time.Hour * 3
 
 var jwtSecretKey string
 
@@ -36,7 +36,7 @@ func BuildJWTString(userID string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TOKEN_EXP)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TokenExpiration)),
 		},
 
 		UserID: userID,

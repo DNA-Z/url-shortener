@@ -45,8 +45,8 @@ func NewDBStorage(connectionString string) (*DBStorage, error) {
 	return &DBStorage{db: db}, nil
 }
 
-func (d *DBStorage) Get(shortURL string) (dto.GetByIdDto, error) {
-	var url dto.GetByIdDto
+func (d *DBStorage) Get(shortURL string) (dto.GetByIDDto, error) {
+	var url dto.GetByIDDto
 
 	query, err := sqlFiles.ReadFile("queries/get_original_url.sql")
 	if err != nil {

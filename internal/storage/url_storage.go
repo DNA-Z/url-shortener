@@ -9,7 +9,7 @@ import (
 type URLStorage interface {
 	Save(url *model.URL) error
 	Saves(urls []model.URL) error
-	Get(shortURL string) (dto.GetByIdDto, error)
+	Get(shortURL string) (dto.GetByIDDto, error)
 	GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, error)
 	LoadAll() (map[string]string, error)
 	DeleteUserURLs(userID uuid.UUID, shortURLs []string) error
