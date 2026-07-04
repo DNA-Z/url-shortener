@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/DNA-Z/url-shortener/internal/audit"
 	"github.com/DNA-Z/url-shortener/internal/auth"
 	"github.com/DNA-Z/url-shortener/internal/config"
 	"github.com/DNA-Z/url-shortener/internal/handler"
@@ -85,24 +84,24 @@ func getDB() *sql.DB {
 	return database
 }
 
-func getAuditPublisher(cfg *config.Options) audit.IPublisher {
-	publisher := audit.NewPublisher()
-
-	if cfg.AuditFile != "" {
-		fileObserver, err := audit.NewFileObserver(cfg.AuditFile)
-		if err != nil {
-			log.Printf("Failed to create file observer: %v", err)
-		} else {
-			publisher.Register(fileObserver)
-			log.Printf("Audit file observer registered: %s", cfg.AuditFile)
-		}
-	}
-
-	if cfg.AuditURL != "" {
-		httpObserver := audit.NewHTTPObserver(cfg.AuditURL)
-		publisher.Register(httpObserver)
-		log.Printf("Audit HTTP observer registered: %s", cfg.AuditURL)
-	}
-
-	return publisher
-}
+//func getAuditPublisher(cfg *config.Options) audit.IPublisher {
+//	publisher := audit.NewPublisher()
+//
+//	if cfg.AuditFile != "" {
+//		fileObserver, err := audit.NewFileObserver(cfg.AuditFile)
+//		if err != nil {
+//			log.Printf("Failed to create file observer: %v", err)
+//		} else {
+//			publisher.Register(fileObserver)
+//			log.Printf("Audit file observer registered: %s", cfg.AuditFile)
+//		}
+//	}
+//
+//	if cfg.AuditURL != "" {
+//		httpObserver := audit.NewHTTPObserver(cfg.AuditURL)
+//		publisher.Register(httpObserver)
+//		log.Printf("Audit HTTP observer registered: %s", cfg.AuditURL)
+//	}
+//
+//	return publisher
+//}
