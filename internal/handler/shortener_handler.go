@@ -62,7 +62,6 @@ func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
 	var conflictErr *cerrors.ConflictError
 	if err != nil && !errors.As(err, &conflictErr) {
 		http.Error(w, "Error shortening URL: "+err.Error(), http.StatusBadRequest)
-		return
 	}
 	if errors.As(err, &conflictErr) {
 		httpStatus = http.StatusConflict
