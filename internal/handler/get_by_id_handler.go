@@ -33,7 +33,6 @@ func (h *URLHandler) GetByIDGet(w http.ResponseWriter, r *http.Request) {
 	}
 	if url.IsDeleted {
 		http.Error(w, "URL is gone", http.StatusGone)
-		return
 	}
 
 	var result string
