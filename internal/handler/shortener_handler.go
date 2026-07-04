@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/DNA-Z/url-shortener/internal/audit"
 	"github.com/DNA-Z/url-shortener/internal/auth"
 	cerrors "github.com/DNA-Z/url-shortener/internal/errors"
 	"github.com/DNA-Z/url-shortener/internal/middleware"
@@ -40,6 +41,7 @@ func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := uuid.Nil
+	userIDStr := uuid.Nil
 
 	if auth.IsAuthEnabled() {
 		userIDStr, ok := middleware.GetUserIDFromContext(r.Context())
@@ -60,6 +62,7 @@ func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
 	var conflictErr *cerrors.ConflictError
 	if err != nil && !errors.As(err, &conflictErr) {
 		http.Error(w, "Error shortening URL: "+err.Error(), http.StatusBadRequest)
+		return
 	}
 	if errors.As(err, &conflictErr) {
 		httpStatus = http.StatusConflict
@@ -70,4 +73,9 @@ func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(httpStatus)
 	w.Write([]byte(result))
+
+	if h.publisher != nil {
+		event := audit.NewEvent(audit.Shorten, userIDStr, url)
+		h.publisher.Publish(event)
+	}
 }

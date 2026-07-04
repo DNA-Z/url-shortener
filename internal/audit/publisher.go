@@ -7,7 +7,7 @@ type Publisher struct {
 	mu        sync.RWMutex
 }
 
-func NewPublisher() *Publisher {
+func NewPublisher() IPublisher {
 	return &Publisher{
 		observers: make(map[Observer]struct{}),
 	}

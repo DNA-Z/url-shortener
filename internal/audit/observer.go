@@ -8,4 +8,5 @@ type IPublisher interface {
 	Register(observer Observer)
 	Unregister(observer Observer)
 	Publish(event AuditEvent)
+	Close()
 }

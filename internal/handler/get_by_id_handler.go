@@ -4,6 +4,10 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/DNA-Z/url-shortener/internal/audit"
+	"github.com/DNA-Z/url-shortener/internal/middleware"
+	"github.com/google/uuid"
 )
 
 func (h *URLHandler) GetByIDGet(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +37,7 @@ func (h *URLHandler) GetByIDGet(w http.ResponseWriter, r *http.Request) {
 	}
 	if url.IsDeleted {
 		http.Error(w, "URL is gone", http.StatusGone)
+		return
 	}
 
 	var result string
@@ -40,4 +45,14 @@ func (h *URLHandler) GetByIDGet(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Location", result)
 	w.WriteHeader(http.StatusTemporaryRedirect)
+
+	if h.publisher != nil {
+		userIDStr, _ := middleware.GetUserIDFromContext(r.Context())
+		userID := uuid.Nil
+		if userIDStr != "" {
+			userID, _ = uuid.Parse(userIDStr)
+		}
+		event := audit.NewEvent(audit.Follow, userID, url.OriginalUrl)
+		h.publisher.Publish(event)
+	}
 }
