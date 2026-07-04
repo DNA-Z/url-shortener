@@ -42,8 +42,8 @@ func (o *Options) OptionsInit() {
 		fileStoragePath := flag.String("f", defaultFileStoragePath, "файл в корне проекта")
 		connectionStringFlag := flag.String("d", defaultConnectionStr, "строка подключения к БД")
 		secretKeyFlag := flag.String("k", defaultSecretKey, "секретный ключ для подписи JWT")
-		auditFileFlag := flag.String("audit-file", defaultAuditFile, "аудит запросов с записью логов в файл")
-		auditURLFlag := flag.String("audit-url", defaultAuditURL, "URL сервера для отправки логов аудита")
+		auditFileFlag := flag.String("-audit-file", defaultAuditFile, "аудит запросов с записью логов в файл")
+		auditURLFlag := flag.String("-audit-url", defaultAuditURL, "URL сервера для отправки логов аудита")
 
 		flag.Parse()
 
