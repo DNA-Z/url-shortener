@@ -11,8 +11,8 @@ type Options struct {
 	FileStoragePath  string
 	ConnectionString string
 	SecretKey        string
-	//AuditFile        string
-	//AuditURL         string
+	AuditFile        string
+	AuditURL         string
 }
 
 func NewOptions() *Options {
@@ -22,8 +22,8 @@ func NewOptions() *Options {
 		FileStoragePath:  "short_url",
 		ConnectionString: "",
 		SecretKey:        "superSecretKey",
-		//AuditFile:        "",
-		//AuditURL:         "",
+		AuditFile:        "",
+		AuditURL:         "",
 	}
 }
 
@@ -33,8 +33,8 @@ func (o *Options) OptionsInit() {
 	defaultFileStoragePath := o.FileStoragePath
 	defaultConnectionStr := o.ConnectionString
 	defaultSecretKey := o.SecretKey
-	//defaultAuditFile := o.AuditFile
-	//defaultAuditURL := o.AuditURL
+	defaultAuditFile := o.AuditFile
+	defaultAuditURL := o.AuditURL
 
 	if flag.Lookup("a") == nil {
 		serverAddressFlag := flag.String("a", defaultServerAddress, "адрес HTTP-сервера")
@@ -42,8 +42,8 @@ func (o *Options) OptionsInit() {
 		fileStoragePath := flag.String("f", defaultFileStoragePath, "файл в корне проекта")
 		connectionStringFlag := flag.String("d", defaultConnectionStr, "строка подключения к БД")
 		secretKeyFlag := flag.String("k", defaultSecretKey, "секретный ключ для подписи JWT")
-		//auditFileFlag := flag.String("audit-file", defaultAuditFile, "аудит запросов с записью логов в файл")
-		//auditURLFlag := flag.String("audit-url", defaultAuditURL, "URL сервера для отправки логов аудита")
+		auditFileFlag := flag.String("audit-file", defaultAuditFile, "аудит запросов с записью логов в файл")
+		auditURLFlag := flag.String("audit-url", defaultAuditURL, "URL сервера для отправки логов аудита")
 
 		flag.Parse()
 
@@ -52,8 +52,8 @@ func (o *Options) OptionsInit() {
 		o.PathToFile(fileStoragePath)
 		o.ConnectionStringSet(connectionStringFlag)
 		o.SecretKeySet(secretKeyFlag)
-		//o.AuditFileSet(auditFileFlag)
-		//o.AuditURLSet(auditURLFlag)
+		o.AuditFileSet(auditFileFlag)
+		o.AuditURLSet(auditURLFlag)
 	} else {
 		// Флаги уже проинициализированы — просто используем текущие значения
 		o.ServerAddressSet(&o.ServerAddress)
@@ -61,8 +61,8 @@ func (o *Options) OptionsInit() {
 		o.PathToFile(&o.FileStoragePath)
 		o.ConnectionStringSet(&o.ConnectionString)
 		o.SecretKeySet(&o.SecretKey)
-		//o.AuditFileSet(&o.AuditFile)
-		//o.AuditURLSet(&o.AuditURL)
+		o.AuditFileSet(&o.AuditFile)
+		o.AuditURLSet(&o.AuditURL)
 	}
 }
 
@@ -111,20 +111,20 @@ func (o *Options) SecretKeySet(secretKeyFlag *string) {
 	}
 }
 
-//func (o *Options) AuditFileSet(auditFileFlag *string) {
-//	switch {
-//	case os.Getenv("AUDIT_FILE") != "":
-//		o.AuditFile = os.Getenv("AUDIT_FILE")
-//	case *auditFileFlag != o.AuditFile:
-//		o.AuditFile = *auditFileFlag
-//	}
-//}
-//
-//func (o *Options) AuditURLSet(auditURLFlag *string) {
-//	switch {
-//	case os.Getenv("AUDIT_URL") != "":
-//		o.AuditURL = os.Getenv("AUDIT_URL")
-//	case *auditURLFlag != o.AuditURL:
-//		o.AuditURL = *auditURLFlag
-//	}
-//}
+func (o *Options) AuditFileSet(auditFileFlag *string) {
+	switch {
+	case os.Getenv("AUDIT_FILE") != "":
+		o.AuditFile = os.Getenv("AUDIT_FILE")
+	case *auditFileFlag != o.AuditFile:
+		o.AuditFile = *auditFileFlag
+	}
+}
+
+func (o *Options) AuditURLSet(auditURLFlag *string) {
+	switch {
+	case os.Getenv("AUDIT_URL") != "":
+		o.AuditURL = os.Getenv("AUDIT_URL")
+	case *auditURLFlag != o.AuditURL:
+		o.AuditURL = *auditURLFlag
+	}
+}
