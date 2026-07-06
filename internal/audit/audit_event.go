@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Event представляет событие аудита.
 type AuditEvent struct {
 	Timestamp int64     `json:"ts"`
 	Action    Action    `json:"action"`

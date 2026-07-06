@@ -14,6 +14,30 @@ import (
 	"github.com/google/uuid"
 )
 
+// ShortenerPost обрабатывает POST / запросы для сокращения URL.
+//
+// Формат запроса: text/plain с URL в теле.
+// Формат ответа: текстовый - сокращенный URL.
+//
+// Пример запроса:
+//
+//	POST / HTTP/1.1
+//	Content-Type: text/plain
+//
+//	https://practicum.ru
+//
+// Пример ответа:
+//
+//	HTTP/1.1 201 Created
+//	Content-Type: text/plain
+//
+//	http://localhost:8080/iGz4syDL
+//
+// Возможные статусы:
+//   - 201 Created - URL успешно создан
+//   - 409 Conflict - URL уже существует (возвращается существующий короткий URL)
+//   - 400 Bad Request - неверный формат запроса
+//   - 401 Unauthorized - требуется аутентификация
 func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
 	var baseAddress = h.baseURL
 

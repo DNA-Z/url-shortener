@@ -10,6 +10,24 @@ import (
 	"github.com/google/uuid"
 )
 
+// GetByIDGet обрабатывает GET /{id} запросы для перенаправления по короткому URL.
+//
+// Выполняет HTTP-редирект (307 Temporary Redirect) на оригинальный URL.
+//
+// Пример запроса:
+//
+//	GET /abc123 HTTP/1.1
+//
+// Пример ответа:
+//
+//	HTTP/1.1 307 Temporary Redirect
+//	Location: https://practicum.ru
+//
+// Возможные статусы:
+//   - 307 Temporary Redirect - успешное перенаправление
+//   - 400 Bad Request - ID не указан
+//   - 404 Not Found - короткий URL не найден
+//   - 410 Gone - URL был удален
 func (h *URLHandler) GetByIDGet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Only GET requests are allowed!", http.StatusBadRequest)

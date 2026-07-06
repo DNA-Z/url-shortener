@@ -1,3 +1,11 @@
+// Package config предоставляет конфигурацию для сервиса сокращения URL.
+//
+// Конфигурация загружается из:
+//   - флагов командной строки
+//   - переменных окружения
+//   - значений по умолчанию
+//
+// Приоритет: переменные окружения > флаги > значения по умолчанию.
 package config
 
 import (
@@ -5,6 +13,7 @@ import (
 	"os"
 )
 
+// Options содержит все настройки сервиса.
 type Options struct {
 	ServerAddress    string
 	BaseURL          string
@@ -15,18 +24,20 @@ type Options struct {
 	AuditURL         string
 }
 
+// NewOptions создает новый экземпляр Options с значениями по умолчанию.
 func NewOptions() *Options {
 	return &Options{
 		ServerAddress:    "localhost:8080",
 		BaseURL:          "http://localhost:8080/",
 		FileStoragePath:  "short_url",
-		ConnectionString: "",
+		ConnectionString: "host=localhost port=5432 user=postgres password=lightning dbname=short_url sslmode=disable",
 		SecretKey:        "superSecretKey",
 		AuditFile:        "",
 		AuditURL:         "",
 	}
 }
 
+// OptionsInit инициализирует конфигурацию из флагов и переменных окружения.
 func (o *Options) OptionsInit() {
 	defaultServerAddress := o.ServerAddress
 	defaultBaseURL := o.BaseURL

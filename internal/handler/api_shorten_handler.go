@@ -15,6 +15,30 @@ import (
 	"github.com/google/uuid"
 )
 
+// ShortenURLPost обрабатывает POST /api/shorten запросы для сокращения URL.
+//
+// Формат запроса: application/json с полем "url".
+// Формат ответа: application/json с полем "short_url".
+//
+// Пример запроса:
+//
+//	POST /api/shorten HTTP/1.1
+//	Content-Type: application/json
+//
+//	{"url": "https://practicum.ru"}
+//
+// Пример ответа:
+//
+//	HTTP/1.1 201 Created
+//	Content-Type: application/json
+//
+//	{"short_url": "http://localhost:8080/iGz4syDL"}
+//
+// Возможные статусы:
+//   - 201 Created - URL успешно создан
+//   - 409 Conflict - URL уже существует
+//   - 400 Bad Request - неверный JSON или пустой URL
+//   - 401 Unauthorized - требуется аутентификация
 func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
