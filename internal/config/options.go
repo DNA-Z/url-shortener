@@ -24,13 +24,13 @@ type Options struct {
 	AuditURL         string
 }
 
-// NewOptions создает новый экземпляр Options с значениями по умолчанию.
+// NewOptions создает новый экземпляр Options со значениями по умолчанию.
 func NewOptions() *Options {
 	return &Options{
 		ServerAddress:    "localhost:8080",
 		BaseURL:          "http://localhost:8080/",
 		FileStoragePath:  "short_url",
-		ConnectionString: "host=localhost port=5432 user=postgres password=lightning dbname=short_url sslmode=disable",
+		ConnectionString: "",
 		SecretKey:        "superSecretKey",
 		AuditFile:        "",
 		AuditURL:         "",
