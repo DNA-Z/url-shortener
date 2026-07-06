@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"net/http/pprof"
+	_ "net/http/pprof"
 
 	"github.com/DNA-Z/url-shortener/internal/audit"
 	"github.com/DNA-Z/url-shortener/internal/auth"
@@ -44,6 +46,15 @@ func main() {
 	r.Use(middleware.GzipMiddleware)
 	r.Use(middleware.AuditMiddleware(auditPublisher))
 
+	r.Route("/debug/pprof", func(r chi.Router) {
+		r.Get("/", pprof.Index)
+		r.Get("/cmdline", pprof.Cmdline)
+		r.Get("/profile", pprof.Profile)
+		r.Get("/symbol", pprof.Symbol)
+		r.Get("/trace", pprof.Trace)
+		r.Get("/{name}", pprof.Index)
+	})
+
 	r.Get("/ping", pingHandler.GetDbPing)
 
 	r.Group(func(r chi.Router) {
@@ -55,6 +66,13 @@ func main() {
 		r.Post("/api/shorten/batch", urlHandler.ShortenBatchPost)
 		r.Delete("/api/user/urls", urlHandler.DeleteUserURLs)
 	})
+
+	//go func() {
+	//	log.Println("Starting pprof on :6060")
+	//	if err := http.ListenAndServe(":6060", nil); err != nil {
+	//		log.Printf("pprof server error: %v", err)
+	//	}
+	//}()
 
 	log.Printf("Сервер запущен на %s\n", cfg.ServerAddress)
 	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))

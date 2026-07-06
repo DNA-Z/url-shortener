@@ -66,6 +66,9 @@ func (u *URLStorage) Shorten(userID uuid.UUID, originalURL string) (string, erro
 	}
 
 	newURL, err := model.NewShortURL(userID, originalURL)
+	if err != nil {
+		return "", err
+	}
 
 	if err := u.storage.Save(newURL); err != nil {
 		return "", err

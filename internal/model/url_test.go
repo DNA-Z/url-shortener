@@ -66,3 +66,9 @@ func TestGenerateShortCode(t *testing.T) {
 		assert.Len(t, codes, count, "Expected %d unique codes", count)
 	})
 }
+
+func BenchmarkGenerateShortCode(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		generateShortCode()
+	}
+}
