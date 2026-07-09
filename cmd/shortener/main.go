@@ -100,7 +100,7 @@ func getService(cfg *config.Options) *service.URLStorage {
 
 func getDB(cfg *config.Options) *sql.DB {
 	ctx := context.Background()
-	database, err := storage.DBConnect(ctx, cfg.ConnectionString)
+	database, err := storage.DBConnect(ctx, "postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable")
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
