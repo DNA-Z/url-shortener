@@ -12,6 +12,52 @@ import (
 	"github.com/google/uuid"
 )
 
+// ShortenBatchPost обрабатывает POST /api/shorten/batch запросы для пакетного сокращения URL.
+//
+// Позволяет сократить несколько URL за один запрос. Все URL обрабатываются
+// в рамках одной сессии пользователя.
+//
+// Формат запроса: application/json с массивом объектов, содержащих correlation_id и original_url.
+// Формат ответа: application/json с массивом объектов, содержащих correlation_id и short_url.
+//
+// Пример запроса:
+//
+//	POST /api/shorten/batch HTTP/1.1
+//	Content-Type: application/json
+//	Authorization: Bearer <token>
+//
+//	[
+//	    {
+//	        "correlation_id": "1",
+//	        "original_url": "https://example.com/very/long/url/1"
+//	    },
+//	    {
+//	        "correlation_id": "2",
+//	        "original_url": "https://example.com/very/long/url/2"
+//	    }
+//	]
+//
+// Пример ответа:
+//
+//	HTTP/1.1 201 Created
+//	Content-Type: application/json
+//
+//	[
+//	    {
+//	        "correlation_id": "1",
+//	        "short_url": "http://localhost:8080/abc123"
+//	    },
+//	    {
+//	        "correlation_id": "2",
+//	        "short_url": "http://localhost:8080/def456"
+//	    }
+//	]
+//
+// Возможные статусы:
+//   - 201 Created - все URL успешно созданы
+//   - 400 Bad Request - неверный JSON или пустой запрос
+//   - 401 Unauthorized - требуется аутентификация
+//   - 500 Internal Server Error - ошибка обработки
 func (h *URLHandler) ShortenBatchPost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST requests are allowed!", http.StatusMethodNotAllowed)
@@ -32,16 +78,10 @@ func (h *URLHandler) ShortenBatchPost(w http.ResponseWriter, r *http.Request) {
 	userID := uuid.Nil
 
 	if auth.IsAuthEnabled() {
-		userIDStr, ok := middleware.GetUserIDFromContext(r.Context())
-		if !ok || userIDStr == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
 		var err error
-		userID, err = uuid.Parse(userIDStr)
+		userID, err = middleware.GetUserIDFromContext(r.Context())
 		if err != nil {
-			http.Error(w, "Invalid user ID", http.StatusInternalServerError)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 	}

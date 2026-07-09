@@ -2,9 +2,12 @@ package middleware
 
 import (
 	"context"
+	"errors"
+	"log"
 	"net/http"
 
 	"github.com/DNA-Z/url-shortener/internal/auth"
+	"github.com/google/uuid"
 )
 
 type contextKey string
@@ -41,9 +44,19 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func GetUserIDFromContext(ctx context.Context) (string, bool) {
-	userID, ok := ctx.Value(userIDKey).(string)
-	return userID, ok
+func GetUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
+	userIDStr, ok := ctx.Value(userIDKey).(string)
+	if !ok || userIDStr == "" {
+		return uuid.Nil, errors.New("userID not found in context")
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		log.Printf("failed to parse userID as UUID: %s", userIDStr)
+		return uuid.Nil, err
+	}
+
+	return userID, nil
 }
 
 func GetUserIDFromCookie(r *http.Request) (string, error) {

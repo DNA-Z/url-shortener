@@ -8,14 +8,40 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/middleware"
 )
 
+// GetUserURLs обрабатывает GET /api/user/urls запросы для получения всех URL пользователя.
+// Возвращает список всех не удаленных URL, созданных текущим пользователем.
+//
+// Пример запроса:
+//
+//	GET /api/user/urls HTTP/1.1
+//	Authorization: Bearer <token>
+//
+// Пример ответа (HTTP 200 OK):
+//
+//	[
+//	    {
+//	        "short_url": "http://localhost:8080/abc123",
+//	        "original_url": "https://example.com/very/long/url/1"
+//	    },
+//	    {
+//	        "short_url": "http://localhost:8080/def456",
+//	        "original_url": "https://example.com/very/long/url/2"
+//	    }
+//	]
+//
+// Возможные статусы:
+//   - 200 OK - успешный ответ со списком URL
+//   - 204 No Content - у пользователя нет URL
+//   - 401 Unauthorized - требуется аутентификация
+//   - 405 Method Not Allowed - неверный метод
 func (h *URLHandler) GetUserURLs(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Only GET requests are allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	userID, ok := middleware.GetUserIDFromContext(r.Context())
-	if !ok || userID == "" {
+	userID, err := middleware.GetUserIDFromContext(r.Context())
+	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}

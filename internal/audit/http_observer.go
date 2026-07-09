@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -44,14 +45,13 @@ func (h *HTTPObserver) Notify(event AuditEvent) error {
 		req.Header.Set("Content-Type", "application/json")
 
 		resp, err := h.client.Do(req)
-		if err == nil {
-			resp.Body.Close()
-			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-				return nil
-			}
+		if err != nil {
 			lastErr = err
 		} else {
-			lastErr = err
+			lastErr = closeAndCheckStatus(resp)
+			if lastErr == nil {
+				return nil
+			}
 		}
 
 		select {
@@ -61,4 +61,12 @@ func (h *HTTPObserver) Notify(event AuditEvent) error {
 		}
 	}
 	return lastErr
+}
+
+func closeAndCheckStatus(resp *http.Response) error {
+	defer resp.Body.Close()
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return nil
+	}
+	return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 }

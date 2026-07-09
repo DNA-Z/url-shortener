@@ -7,7 +7,6 @@ import (
 
 	"github.com/DNA-Z/url-shortener/internal/audit"
 	"github.com/DNA-Z/url-shortener/internal/middleware"
-	"github.com/google/uuid"
 )
 
 // GetByIDGet обрабатывает GET /{id} запросы для перенаправления по короткому URL.
@@ -64,10 +63,10 @@ func (h *URLHandler) GetByIDGet(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 
 	if h.publisher != nil {
-		userIDStr, _ := middleware.GetUserIDFromContext(r.Context())
-		userID := uuid.Nil
-		if userIDStr != "" {
-			userID, _ = uuid.Parse(userIDStr)
+		userID, err := middleware.GetUserIDFromContext(r.Context())
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
 		}
 		event := audit.NewEvent(audit.Follow, userID, url.OriginalUrl)
 		h.publisher.Publish(event)

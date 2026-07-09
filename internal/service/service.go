@@ -13,7 +13,7 @@ import (
 )
 
 type URLStorage struct {
-	storage storage.URLStorage
+	Storage storage.URLStorage
 	isDB    bool
 }
 
@@ -48,7 +48,7 @@ func NewURL(cfg *config.Options) (*URLStorage, error) {
 
 func (u *URLStorage) Shorten(userID uuid.UUID, originalURL string) (string, error) {
 
-	data, err := u.storage.LoadAll()
+	data, err := u.Storage.LoadAll()
 	if err != nil {
 		return "", err
 	}
@@ -70,7 +70,7 @@ func (u *URLStorage) Shorten(userID uuid.UUID, originalURL string) (string, erro
 		return "", err
 	}
 
-	if err := u.storage.Save(newURL); err != nil {
+	if err := u.Storage.Save(newURL); err != nil {
 		return "", err
 	}
 	return newURL.ShortURL, nil
@@ -79,7 +79,7 @@ func (u *URLStorage) Shorten(userID uuid.UUID, originalURL string) (string, erro
 func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (dto.GetByIDDto, error) {
 	log.Printf("Get by id called with param='%s'", shortURL)
 
-	url, err := u.storage.Get(shortURL)
+	url, err := u.Storage.Get(shortURL)
 	if err != nil {
 		log.Printf("Get URL failed for ID=%s: %v", shortURL, err)
 		return dto.GetByIDDto{}, err
@@ -89,16 +89,10 @@ func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (dto.GetByIDDto, er
 	return url, nil
 }
 
-func (u *URLStorage) GetUserURLsByUserID(userIDStr string) ([]dto.UserURLsResponseDto, error) {
-	log.Printf("Get users URLs by user id called with userID='%s'", userIDStr)
+func (u *URLStorage) GetUserURLsByUserID(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {
+	log.Printf("Get users URLs by user id called with userID='%s'", userID.String())
 
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		log.Print("Invalid user ID format")
-		return nil, err
-	}
-
-	result, err := u.storage.GetUserURLs(userID)
+	result, err := u.Storage.GetUserURLs(userID)
 	if err != nil {
 		log.Printf("Get users URLs by user id failed for ID=%s: %v", result, err)
 		return nil, err
@@ -108,16 +102,11 @@ func (u *URLStorage) GetUserURLsByUserID(userIDStr string) ([]dto.UserURLsRespon
 	return result, nil
 }
 
-func (u *URLStorage) DeleteUserURLs(userIDStr string, shortURLs []string) error {
-	log.Printf("Delete users URLs called with userID='%s'", userIDStr)
+func (u *URLStorage) DeleteUserURLs(userID uuid.UUID, shortURLs []string) error {
+	log.Printf("Delete users URLs called with userID='%s'", userID.String())
 
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		log.Print("Invalid user ID format")
-		return err
-	}
-
-	err = u.storage.DeleteUserURLs(userID, shortURLs)
+	var err error
+	err = u.Storage.DeleteUserURLs(userID, shortURLs)
 	if err != nil {
 		log.Printf("Delete users URLs failed: %v", err)
 		return err
@@ -148,7 +137,7 @@ func (u *URLStorage) Batch(userID uuid.UUID, request []dto.BatchRequestDto, base
 }
 
 func newURLService(store storage.URLStorage, isDB bool) (*URLStorage, error) {
-	urlService := &URLStorage{storage: store, isDB: isDB}
+	urlService := &URLStorage{Storage: store, isDB: isDB}
 
 	if data, err := store.LoadAll(); err == nil {
 		_ = data

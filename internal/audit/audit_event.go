@@ -15,6 +15,7 @@ type AuditEvent struct {
 	URL       string    `json:"url"`
 }
 
+// NewEvent создает новое событие аудита.
 func NewEvent(action Action, userID uuid.UUID, url string) AuditEvent {
 	return AuditEvent{
 		Timestamp: time.Now().Unix(),

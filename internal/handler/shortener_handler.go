@@ -65,17 +65,12 @@ func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := uuid.Nil
-	userIDStr := uuid.Nil
 
 	if auth.IsAuthEnabled() {
-		userIDStr, ok := middleware.GetUserIDFromContext(r.Context())
-		if !ok || userIDStr == "" {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-		userID, err = uuid.Parse(userIDStr)
+		var err error
+		userID, err = middleware.GetUserIDFromContext(r.Context())
 		if err != nil {
-			http.Error(w, "Invalid user ID", http.StatusInternalServerError)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 	}
@@ -98,7 +93,9 @@ func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(result))
 
 	if h.publisher != nil {
-		event := audit.NewEvent(audit.Shorten, userIDStr, url)
+		userID, _ = middleware.GetUserIDFromContext(r.Context())
+
+		event := audit.NewEvent(audit.Shorten, userID, url)
 		h.publisher.Publish(event)
 	}
 }
