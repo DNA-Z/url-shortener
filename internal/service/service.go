@@ -13,8 +13,14 @@ import (
 )
 
 type URLStorage struct {
-	Storage storage.URLStorage
+	storage storage.URLStorage
 	isDB    bool
+}
+
+// NewURLService создает новый экземпляр URLStorage с указанным хранилищем.
+// Используется для тестирования и примеров.
+func NewURLService(store storage.URLStorage, isDB bool) (*URLStorage, error) {
+	return newURLService(store, isDB)
 }
 
 func NewURL(cfg *config.Options) (*URLStorage, error) {
@@ -48,7 +54,7 @@ func NewURL(cfg *config.Options) (*URLStorage, error) {
 
 func (u *URLStorage) Shorten(userID uuid.UUID, originalURL string) (string, error) {
 
-	data, err := u.Storage.LoadAll()
+	data, err := u.storage.LoadAll()
 	if err != nil {
 		return "", err
 	}
@@ -70,7 +76,7 @@ func (u *URLStorage) Shorten(userID uuid.UUID, originalURL string) (string, erro
 		return "", err
 	}
 
-	if err := u.Storage.Save(newURL); err != nil {
+	if err := u.storage.Save(newURL); err != nil {
 		return "", err
 	}
 	return newURL.ShortURL, nil
@@ -79,7 +85,7 @@ func (u *URLStorage) Shorten(userID uuid.UUID, originalURL string) (string, erro
 func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (dto.GetByIDDto, error) {
 	log.Printf("Get by id called with param='%s'", shortURL)
 
-	url, err := u.Storage.Get(shortURL)
+	url, err := u.storage.Get(shortURL)
 	if err != nil {
 		log.Printf("Get URL failed for ID=%s: %v", shortURL, err)
 		return dto.GetByIDDto{}, err
@@ -92,7 +98,7 @@ func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (dto.GetByIDDto, er
 func (u *URLStorage) GetUserURLsByUserID(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {
 	log.Printf("Get users URLs by user id called with userID='%s'", userID.String())
 
-	result, err := u.Storage.GetUserURLs(userID)
+	result, err := u.storage.GetUserURLs(userID)
 	if err != nil {
 		log.Printf("Get users URLs by user id failed for ID=%s: %v", result, err)
 		return nil, err
@@ -106,7 +112,7 @@ func (u *URLStorage) DeleteUserURLs(userID uuid.UUID, shortURLs []string) error 
 	log.Printf("Delete users URLs called with userID='%s'", userID.String())
 
 	var err error
-	err = u.Storage.DeleteUserURLs(userID, shortURLs)
+	err = u.storage.DeleteUserURLs(userID, shortURLs)
 	if err != nil {
 		log.Printf("Delete users URLs failed: %v", err)
 		return err
@@ -137,7 +143,7 @@ func (u *URLStorage) Batch(userID uuid.UUID, request []dto.BatchRequestDto, base
 }
 
 func newURLService(store storage.URLStorage, isDB bool) (*URLStorage, error) {
-	urlService := &URLStorage{Storage: store, isDB: isDB}
+	urlService := &URLStorage{storage: store, isDB: isDB}
 
 	if data, err := store.LoadAll(); err == nil {
 		_ = data
