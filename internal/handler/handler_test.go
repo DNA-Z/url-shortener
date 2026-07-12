@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/DNA-Z/url-shortener/internal/config"
 	"github.com/DNA-Z/url-shortener/internal/dto"
-	"github.com/DNA-Z/url-shortener/internal/infrastructure"
 	"github.com/DNA-Z/url-shortener/internal/service"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +20,7 @@ import (
 func TestURLHandler_GetByIDGet(t *testing.T) {
 	tests := []struct {
 		name           string
-		svc            *service.URL
+		svc            *service.URLStorage
 		req            *http.Request
 		res            http.ResponseWriter
 		expectedStatus int
@@ -28,22 +29,23 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 	}{
 		{
 			name: "successful redirect with valid ID",
-			svc: func() *service.URL {
+			svc: func() *service.URLStorage {
 				configure := config.NewOptions()
 				configure.OptionsInit()
-				consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
-				require.NoError(t, err, "failed to create consumer")
-				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
-				require.NoError(t, err, "failed to create producer")
-				svc := service.NewURL(consumer, producer)
-				svc.URLs = map[string]string{
-					"123": "https://example.com",
-				}
+				svc, err := service.NewURL(configure)
+				require.NoError(t, err, "failed to service.NewURL(configure)")
+
+				shortID, err := svc.Shorten(uuid.Nil, "https://example.com")
+				require.NoError(t, err, "failed to shorten URL")
+
+				t.Setenv("TEST_SHORT_ID", shortID) // или передать через замыкание
 				return svc
 			}(),
 			req: func() *http.Request {
-				req := httptest.NewRequest(http.MethodGet, "/url/123", nil)
-				req.SetPathValue("id", "123")
+				shortID := os.Getenv("TEST_SHORT_ID")
+				path := "/url/" + shortID
+				req := httptest.NewRequest(http.MethodGet, path, nil)
+				req.SetPathValue("id", shortID)
 				return req
 			}(),
 			res:            httptest.NewRecorder(),
@@ -53,17 +55,14 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 		},
 		{
 			name: "non-existent ID returns error",
-			svc: func() *service.URL {
+			svc: func() *service.URLStorage {
 				configure := config.NewOptions()
 				configure.OptionsInit()
-				consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
-				require.NoError(t, err, "failed to create consumer")
-				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
-				require.NoError(t, err, "failed to create producer")
-				svc := service.NewURL(consumer, producer)
-				svc.URLs = map[string]string{
-					"existing-id": "https://example.com",
-				}
+				svc, err := service.NewURL(configure)
+				require.NoError(t, err, "failed to service.NewURL(configure)")
+
+				_, err = svc.Shorten(uuid.Nil, "https://example.com")
+				require.NoError(t, err, "failed to shorten URL")
 				return svc
 			}(),
 			req: func() *http.Request {
@@ -78,14 +77,13 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 		},
 		{
 			name: "empty URLs map returns error",
-			svc: func() *service.URL {
+			svc: func() *service.URLStorage {
 				configure := config.NewOptions()
 				configure.OptionsInit()
-				consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
-				require.NoError(t, err, "failed to create consumer")
-				producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
-				require.NoError(t, err, "failed to create producer")
-				return service.NewURL(consumer, producer)
+				svc, err := service.NewURL(configure)
+				require.NoError(t, err, "failed to service.NewURL(configure)")
+
+				return svc
 			}(),
 			req: func() *http.Request {
 				req := httptest.NewRequest(http.MethodGet, "/url/any-id", nil)
@@ -101,7 +99,7 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := NewURLHandler(tt.svc, "localhost:8080", "http://localhost:8080/")
+			h := NewURLHandler(tt.svc, "localhost:8080", "http://localhost:8080/", nil)
 			h.GetByIDGet(tt.res, tt.req)
 			rr := tt.res.(*httptest.ResponseRecorder)
 
@@ -137,12 +135,10 @@ func TestURLHandler_ShortenerPost(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			configure := config.NewOptions()
 			configure.OptionsInit()
-			consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
-			require.NoError(t, err, "failed to create consumer")
-			producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
-			require.NoError(t, err, "failed to create producer")
-			svc := service.NewURL(consumer, producer)
-			h := NewURLHandler(svc, "localhost:8080", "http://localhost:8080/")
+			svc, err := service.NewURL(configure)
+			require.NoError(t, err, "failed to service.NewURL(configure)")
+
+			h := NewURLHandler(svc, "localhost:8080", "http://localhost:8080/", nil)
 
 			req1 := httptest.NewRequest(http.MethodPost, "/shorten", bytes.NewBufferString(tt.url1))
 			req1.Host = "localhost:8080"
@@ -168,13 +164,10 @@ func TestURLHandler_ShortenerPost(t *testing.T) {
 func TestURLHandler_ShortenURLPost(t *testing.T) {
 	configure := config.NewOptions()
 	configure.OptionsInit()
-	consumer, err := infrastructure.NewConsumer(configure.FileStoragePath)
-	require.NoError(t, err, "failed to create consumer")
-	producer, err := infrastructure.NewURLProducer(configure.FileStoragePath)
-	require.NoError(t, err, "failed to create producer")
-	urlService := service.NewURL(consumer, producer)
+	svc, err := service.NewURL(configure)
+	require.NoError(t, err, "failed to service.NewURL(configure)")
 	handler := &URLHandler{
-		urlService: urlService,
+		urlService: svc,
 		baseURL:    "http://localhost:8080",
 	}
 
@@ -224,9 +217,8 @@ func TestURLHandler_ShortenURLPost(t *testing.T) {
 		shortID := response.ShortURL[len("http://localhost:8080/"):]
 		assert.NotEmpty(t, shortID)
 
-		// Проверим, что ID действительно ведёт к оригинальному URL
-		retrievedURL, err := urlService.GetByID(shortID)
+		retrievedURL, err := svc.GetOriginURLByShortURL(shortID)
 		require.NoError(t, err)
-		assert.Equal(t, originalURL, retrievedURL)
+		assert.Equal(t, originalURL, retrievedURL.OriginalUrl)
 	})
 }

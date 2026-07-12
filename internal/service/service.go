@@ -1,80 +1,153 @@
 package service
 
 import (
-	"fmt"
+	"log"
+	"net/http"
 
-	"github.com/DNA-Z/url-shortener/internal/infrastructure"
+	"github.com/DNA-Z/url-shortener/internal/config"
+	"github.com/DNA-Z/url-shortener/internal/dto"
+	"github.com/DNA-Z/url-shortener/internal/errors"
 	"github.com/DNA-Z/url-shortener/internal/model"
+	"github.com/DNA-Z/url-shortener/internal/storage"
+	"github.com/google/uuid"
 )
 
-type URL struct {
-	consumer *infrastructure.URLConsumer
-	producer *infrastructure.URLProducer
-	URLs     map[string]string
+type URLStorage struct {
+	storage storage.URLStorage
+	isDB    bool
 }
 
-func NewURL(consumer *infrastructure.URLConsumer, producer *infrastructure.URLProducer) *URL {
-	urlService := &URL{
-		consumer: consumer,
-		producer: producer,
-		URLs:     make(map[string]string),
-	}
-
-	urlService.loadAllURLToMap()
-
-	return urlService
+// NewURLService создает новый экземпляр URLStorage с указанным хранилищем.
+// Используется для тестирования и примеров.
+func NewURLService(store storage.URLStorage, isDB bool) (*URLStorage, error) {
+	return newURLService(store, isDB)
 }
 
-func (u *URL) Shorten(url string) (string, error) {
+func NewURL(cfg *config.Options) (*URLStorage, error) {
+	var store storage.URLStorage
+	var err error
+	isDB := false
 
-	isURLExist, id := u.urlExists(url)
-
-	if isURLExist {
-		return id, nil
+	if cfg.ConnectionString != "" {
+		store, err = storage.NewDBStorage(cfg.ConnectionString)
+		if err == nil {
+			log.Printf("Using database storage")
+			isDB = true
+			return newURLService(store, isDB)
+		}
+		log.Printf("Failed to connect to DB: %v\n", err)
 	}
 
-	newURL := model.NewShortURL(url)
+	if cfg.FileStoragePath != "" {
+		store, err = storage.NewFileStorage(cfg.FileStoragePath)
+		if err == nil {
+			log.Println("Using file storage")
+			return newURLService(store, isDB)
+		}
+		log.Printf("Failed to open file storage: %v\n", err)
+	}
 
-	file, err := model.NewURLFile(newURL.URLID, newURL.LongURL)
+	store = storage.NewMemoryStorage()
+	log.Println("Using in-memory storage")
+	return newURLService(store, isDB)
+}
+
+func (u *URLStorage) Shorten(userID uuid.UUID, originalURL string) (string, error) {
+
+	data, err := u.storage.LoadAll()
 	if err != nil {
 		return "", err
 	}
 
-	err = u.producer.WriteURL(file)
-	if err != nil {
-		return "", err
-	}
-
-	u.URLs[newURL.URLID] = newURL.LongURL
-
-	return newURL.URLID, nil
-}
-
-func (u *URL) GetByID(urlID string) (string, error) {
-	foundURL, ok := u.URLs[urlID]
-	if !ok {
-		return "", fmt.Errorf("URL %v not found", urlID)
-	}
-
-	return foundURL, nil
-}
-
-func (u *URL) loadAllURLToMap() {
-	files, err := u.consumer.ReadURL()
-	if err != nil {
-		return
-	}
-
-	for _, url := range files {
-		u.URLs[url.ShortURL] = url.OriginalURL
-	}
-}
-
-func (u *URL) urlExists(url string) (bool, string) {
-	for key, value := range u.URLs {
-		if value == url {
-			return true, key
+	for short, long := range data {
+		if long == originalURL {
+			if u.isDB {
+				return short, &errors.ConflictError{
+					Status: http.StatusConflict,
+					URL:    originalURL,
+				}
+			}
+			return short, nil
 		}
 	}
-	return false, ""
+
+	newURL, err := model.NewShortURL(userID, originalURL)
+	if err != nil {
+		return "", err
+	}
+
+	if err := u.storage.Save(newURL); err != nil {
+		return "", err
+	}
+	return newURL.ShortURL, nil
+}
+
+func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (dto.GetByIDDto, error) {
+	log.Printf("Get by id called with param='%s'", shortURL)
+
+	url, err := u.storage.Get(shortURL)
+	if err != nil {
+		log.Printf("Get URL failed for ID=%s: %v", shortURL, err)
+		return dto.GetByIDDto{}, err
+	}
+
+	log.Printf("Result URL: %v", url.OriginalUrl)
+	return url, nil
+}
+
+func (u *URLStorage) GetUserURLsByUserID(userID uuid.UUID) ([]dto.UserURLsResponseDto, error) {
+	log.Printf("Get users URLs by user id called with userID='%s'", userID.String())
+
+	result, err := u.storage.GetUserURLs(userID)
+	if err != nil {
+		log.Printf("Get users URLs by user id failed for ID=%s: %v", result, err)
+		return nil, err
+	}
+
+	log.Printf("Result users URLs by user id: %v", result)
+	return result, nil
+}
+
+func (u *URLStorage) DeleteUserURLs(userID uuid.UUID, shortURLs []string) error {
+	log.Printf("Delete users URLs called with userID='%s'", userID.String())
+
+	var err error
+	err = u.storage.DeleteUserURLs(userID, shortURLs)
+	if err != nil {
+		log.Printf("Delete users URLs failed: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (u *URLStorage) Batch(userID uuid.UUID, request []dto.BatchRequestDto, baseAddress string) (response []dto.BatchResponseDto, err error) {
+	response = make([]dto.BatchResponseDto, 0, len(request))
+
+	for _, req := range request {
+		shortURL, err := u.Shorten(userID, req.OriginalURL)
+
+		log.Printf("shortened from '%+q' -> '%+q'\n", req.OriginalURL, shortURL)
+
+		if err != nil {
+			log.Printf("Failed to shorten URL for ID=%s, OriginalURL=%s: %v", req.ID, req.OriginalURL, err)
+			continue
+		}
+		response = append(response, dto.BatchResponseDto{
+			ID:       req.ID,
+			ShortURL: baseAddress + shortURL,
+		})
+	}
+
+	return response, err
+}
+
+func newURLService(store storage.URLStorage, isDB bool) (*URLStorage, error) {
+	urlService := &URLStorage{storage: store, isDB: isDB}
+
+	if data, err := store.LoadAll(); err == nil {
+		_ = data
+	}
+
+	return urlService, nil
 }
