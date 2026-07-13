@@ -28,10 +28,12 @@ import (
 	"honnef.co/go/tools/stylecheck"
 
 	"github.com/breml/errchkjson"
+
+	"github.com/DNA-Z/url-shortener/cmd/staticlint/analyzers"
 )
 
 func main() {
-	analyzers := []*analysis.Analyzer{
+	analyzersList := []*analysis.Analyzer{
 		assign.Analyzer,
 		atomic.Analyzer,
 		bools.Analyzer,
@@ -54,30 +56,35 @@ func main() {
 
 	// Анализаторы класса SA из staticcheck
 	for _, a := range staticcheck.Analyzers {
-		analyzers = append(analyzers, a.Analyzer)
+		analyzersList = append(analyzersList, a.Analyzer)
 	}
 
 	// Анализаторы класса S (simple)
 	for _, a := range simple.Analyzers {
-		analyzers = append(analyzers, a.Analyzer)
+		analyzersList = append(analyzersList, a.Analyzer)
 	}
 
 	// Анализаторы класса ST (stylecheck)
 	for _, a := range stylecheck.Analyzers {
-		analyzers = append(analyzers, a.Analyzer)
+		analyzersList = append(analyzersList, a.Analyzer)
 	}
 
 	// Анализаторы класса QF (quickfix)
 	for _, a := range quickfix.Analyzers {
-		analyzers = append(analyzers, a.Analyzer)
+		analyzersList = append(analyzersList, a.Analyzer)
 	}
 
 	// Дополнительные анализаторы
-	analyzers = append(analyzers,
+	analyzersList = append(analyzersList,
 		errchkjson.NewAnalyzer(),
 		bodyclose.Analyzer,
 	)
 
+	// Собственный список анализатор
+	analyzersList = append(analyzersList,
+		analyzers.OsExitAnalyzer,
+	)
+
 	// Запуск multichecker
-	multichecker.Main(analyzers...)
+	multichecker.Main(analyzersList...)
 }
