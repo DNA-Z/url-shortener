@@ -27,7 +27,7 @@ func NewDBPingHandler(cfg *config.Options, db *sql.DB) *DBPingHandler {
 	}
 }
 
-// GetDbPing обрабатывает GET /ping запросы для проверки работоспособности БД.
+// GetDBPing обрабатывает GET /ping запросы для проверки работоспособности БД.
 //
 // Пример запроса:
 // GET /ping HTTP/1.1
@@ -42,7 +42,7 @@ func NewDBPingHandler(cfg *config.Options, db *sql.DB) *DBPingHandler {
 //   - 200 OK - подключение к БД успешно
 //   - 400 Bad Request - неверный метод запроса
 //   - 500 Internal Server Error - ошибка подключения к БД
-func (h *DBPingHandler) GetDbPing(w http.ResponseWriter, r *http.Request) {
+func (h *DBPingHandler) GetDBPing(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Only GET requests are allowed!", http.StatusBadRequest)
 		return
