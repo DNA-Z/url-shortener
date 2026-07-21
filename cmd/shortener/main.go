@@ -59,7 +59,7 @@ func main() {
 		r.Get("/{name}", pprof.Index)
 	})
 
-	r.Get("/ping", pingHandler.GetDbPing)
+	r.Get("/ping", pingHandler.GetDBPing)
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
