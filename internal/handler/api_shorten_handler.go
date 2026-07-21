@@ -74,7 +74,7 @@ func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	shortUrl, err := h.urlService.Shorten(userID, request.URL)
+	shortURL, err := h.urlService.Shorten(userID, request.URL)
 
 	var conflictErr *cerrors.ConflictError
 	if err != nil && !errors.As(err, &conflictErr) {
@@ -86,7 +86,7 @@ func (h *URLHandler) ShortenURLPost(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Status:", conflictErr.Status)
 	}
 
-	response.ShortURL = baseAddress + shortUrl
+	response.ShortURL = baseAddress + shortURL
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpStatus)

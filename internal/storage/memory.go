@@ -56,7 +56,7 @@ func (m *MemoryStorage) Get(shortURL string) (dto.GetByIDDto, error) {
 
 	if url, exists := m.urls[shortURL]; exists {
 		return dto.GetByIDDto{
-			OriginalUrl: url.OriginalURL,
+			OriginalURL: url.OriginalURL,
 			IsDeleted:   url.IsDeleted,
 		}, nil
 	}
