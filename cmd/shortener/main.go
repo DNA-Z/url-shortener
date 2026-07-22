@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/pprof"
@@ -24,7 +25,15 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
+
 func main() {
+	printBuildInfo()
+
 	logger := getLogger()
 	defer logger.Sync()
 
@@ -70,13 +79,6 @@ func main() {
 		r.Post("/api/shorten/batch", urlHandler.ShortenBatchPost)
 		r.Delete("/api/user/urls", urlHandler.DeleteUserURLs)
 	})
-
-	//go func() {
-	//	log.Println("Starting pprof on :6060")
-	//	if err := http.ListenAndServe(":6060", nil); err != nil {
-	//		log.Printf("pprof server error: %v", err)
-	//	}
-	//}()
 
 	log.Printf("Сервер запущен на %s\n", cfg.ServerAddress)
 	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
@@ -127,4 +129,25 @@ func getAuditPublisher(cfg *config.Options) audit.IPublisher {
 	}
 
 	return publisher
+}
+
+func printBuildInfo() {
+	version := buildVersion
+	if version == "" {
+		version = "N/A"
+	}
+
+	date := buildDate
+	if date == "" {
+		date = "N/A"
+	}
+
+	commit := buildCommit
+	if commit == "" {
+		commit = "N/A"
+	}
+
+	fmt.Printf("Build version: %s\n", version)
+	fmt.Printf("Build date: %s\n", date)
+	fmt.Printf("Build commit: %s\n", commit)
 }
