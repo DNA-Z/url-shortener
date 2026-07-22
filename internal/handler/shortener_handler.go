@@ -67,7 +67,6 @@ func (h *URLHandler) ShortenerPost(w http.ResponseWriter, r *http.Request) {
 	userID := uuid.Nil
 
 	if auth.IsAuthEnabled() {
-		var err error
 		userID, err = middleware.GetUserIDFromContext(r.Context())
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)

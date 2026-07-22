@@ -1,3 +1,4 @@
+// Package compress реализована библиотека для сжатия ответов в формате gzip.
 package compress
 
 import (

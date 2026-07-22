@@ -219,6 +219,6 @@ func TestURLHandler_ShortenURLPost(t *testing.T) {
 
 		retrievedURL, err := svc.GetOriginURLByShortURL(shortID)
 		require.NoError(t, err)
-		assert.Equal(t, originalURL, retrievedURL.OriginalUrl)
+		assert.Equal(t, originalURL, retrievedURL.OriginalURL)
 	})
 }
