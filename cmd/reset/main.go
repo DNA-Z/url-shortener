@@ -233,12 +233,12 @@ func main() {
 	rootDir := "."
 	allStructs := []StructInfo{}
 
-	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(rootDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if !info.IsDir() {
+		if !d.IsDir() {
 			return nil
 		}
 

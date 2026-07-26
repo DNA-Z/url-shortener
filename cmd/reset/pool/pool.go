@@ -8,17 +8,17 @@ type Resetter interface {
 }
 
 type Pool[T Resetter] struct {
-	pool sync.Pool
-	new  func() T
+	pool    sync.Pool
+	newFunc func() T
 }
 
 func New[T Resetter](newFunc func() T) *Pool[T] {
 	p := &Pool[T]{
-		new: newFunc,
+		newFunc: newFunc,
 	}
 
 	p.pool.New = func() interface{} {
-		return p.new()
+		return p.newFunc()
 	}
 
 	return p
