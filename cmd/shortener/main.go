@@ -23,6 +23,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"go.uber.org/zap"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var (
@@ -81,7 +82,49 @@ func main() {
 	})
 
 	log.Printf("Сервер запущен на %s\n", cfg.ServerAddress)
-	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
+
+	startServer(cfg, r)
+}
+
+func startServer(cfg *config.Options, handler http.Handler) {
+	if cfg.EnableHTTPS {
+		log.Printf("Запуск HTTPS сервера на %s\n", cfg.ServerAddress)
+		log.Println("HTTPS включен с автоматическими сертификатами Let's Encrypt")
+
+		manager := &autocert.Manager{
+			Cache:  autocert.DirCache("cache-dir"),
+			Prompt: autocert.AcceptTOS,
+		}
+
+		server := &http.Server{
+			Addr:      cfg.ServerAddress,
+			Handler:   handler,
+			TLSConfig: manager.TLSConfig(),
+		}
+
+		if err := server.ListenAndServeTLS("", ""); err != nil {
+			log.Fatal("Ошибка запуска HTTPS сервера:", err)
+		}
+	} else {
+		log.Printf("Запуск HTTP сервера на %s\n", cfg.ServerAddress)
+		if err := http.ListenAndServe(cfg.ServerAddress, handler); err != nil {
+			log.Fatal("Ошибка запуска HTTP сервера:", err)
+		}
+	}
+}
+
+func startServer2(cfg *config.Options, handler http.Handler) {
+	if cfg.EnableHTTPS {
+		log.Printf("Запуск HTTPS сервера на %s\n", cfg.ServerAddress)
+		if err := http.ListenAndServeTLS(cfg.ServerAddress, "server.crt", "server.key", handler); err != nil {
+			log.Fatal("Ошибка запуска HTTPS сервера:", err)
+		}
+	} else {
+		log.Printf("Запуск HTTP сервера на %s\n", cfg.ServerAddress)
+		if err := http.ListenAndServe(cfg.ServerAddress, handler); err != nil {
+			log.Fatal("Ошибка запуска HTTP сервера:", err)
+		}
+	}
 }
 
 func getLogger() *zap.Logger {
