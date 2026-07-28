@@ -22,6 +22,7 @@ type Options struct {
 	SecretKey        string
 	AuditFile        string
 	AuditURL         string
+	EnableHTTPS      bool
 }
 
 // NewOptions создает новый экземпляр Options со значениями по умолчанию.
@@ -34,6 +35,7 @@ func NewOptions() *Options {
 		SecretKey:        "superSecretKey",
 		AuditFile:        "",
 		AuditURL:         "",
+		EnableHTTPS:      false,
 	}
 }
 
@@ -46,6 +48,7 @@ func (o *Options) OptionsInit() {
 	defaultSecretKey := o.SecretKey
 	defaultAuditFile := o.AuditFile
 	defaultAuditURL := o.AuditURL
+	defaultEnableHTTPS := o.EnableHTTPS
 
 	if flag.Lookup("a") == nil {
 		serverAddressFlag := flag.String("a", defaultServerAddress, "адрес HTTP-сервера")
@@ -55,6 +58,7 @@ func (o *Options) OptionsInit() {
 		secretKeyFlag := flag.String("k", defaultSecretKey, "секретный ключ для подписи JWT")
 		auditFileFlag := flag.String("audit-file", defaultAuditFile, "аудит запросов с записью логов в файл")
 		auditURLFlag := flag.String("audit-url", defaultAuditURL, "URL сервера для отправки логов аудита")
+		enableHTTPSFlag := flag.Bool("s", defaultEnableHTTPS, "включить HTTPS")
 
 		flag.Parse()
 
@@ -65,8 +69,9 @@ func (o *Options) OptionsInit() {
 		o.SecretKeySet(secretKeyFlag)
 		o.AuditFileSet(auditFileFlag)
 		o.AuditURLSet(auditURLFlag)
+		o.EnableHTTPSSet(enableHTTPSFlag)
 	} else {
-		// Флаги уже проинициализированы — просто используем текущие значения
+		// Флаги уже проинициализированы
 		o.ServerAddressSet(&o.ServerAddress)
 		o.BaseURLSet(&o.BaseURL)
 		o.PathToFile(&o.FileStoragePath)
@@ -74,6 +79,7 @@ func (o *Options) OptionsInit() {
 		o.SecretKeySet(&o.SecretKey)
 		o.AuditFileSet(&o.AuditFile)
 		o.AuditURLSet(&o.AuditURL)
+		o.EnableHTTPSSet(&o.EnableHTTPS)
 	}
 }
 
@@ -137,5 +143,14 @@ func (o *Options) AuditURLSet(auditURLFlag *string) {
 		o.AuditURL = os.Getenv("AUDIT_URL")
 	case *auditURLFlag != o.AuditURL:
 		o.AuditURL = *auditURLFlag
+	}
+}
+
+func (o *Options) EnableHTTPSSet(enableHTTPSFlag *bool) {
+	switch {
+	case os.Getenv("ENABLE_HTTPS") != "":
+		o.EnableHTTPS = os.Getenv("ENABLE_HTTPS") == "true"
+	case *enableHTTPSFlag != o.EnableHTTPS:
+		o.EnableHTTPS = *enableHTTPSFlag
 	}
 }

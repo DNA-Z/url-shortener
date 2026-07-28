@@ -133,7 +133,7 @@ func (f *FileStorage) Get(shortURL string) (dto.GetByIDDto, error) {
 	for _, url := range f.data {
 		if url.ShortURL == shortURL {
 			return dto.GetByIDDto{
-				OriginalUrl: url.OriginalURL,
+				OriginalURL: url.OriginalURL,
 				IsDeleted:   url.IsDeleted,
 			}, nil
 		}

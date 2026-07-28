@@ -183,7 +183,7 @@ func Example_ping() {
 	h := handler.NewDBPingHandler(cfg, nil)
 
 	r := chi.NewRouter()
-	r.Get("/ping", h.GetDbPing)
+	r.Get("/ping", h.GetDBPing)
 
 	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
 	w := httptest.NewRecorder()

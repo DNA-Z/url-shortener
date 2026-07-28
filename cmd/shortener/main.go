@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/pprof"
@@ -22,9 +23,18 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"go.uber.org/zap"
+	"golang.org/x/crypto/acme/autocert"
+)
+
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
 )
 
 func main() {
+	printBuildInfo()
+
 	logger := getLogger()
 	defer logger.Sync()
 
@@ -59,7 +69,7 @@ func main() {
 		r.Get("/{name}", pprof.Index)
 	})
 
-	r.Get("/ping", pingHandler.GetDbPing)
+	r.Get("/ping", pingHandler.GetDBPing)
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
@@ -71,15 +81,36 @@ func main() {
 		r.Delete("/api/user/urls", urlHandler.DeleteUserURLs)
 	})
 
-	//go func() {
-	//	log.Println("Starting pprof on :6060")
-	//	if err := http.ListenAndServe(":6060", nil); err != nil {
-	//		log.Printf("pprof server error: %v", err)
-	//	}
-	//}()
-
 	log.Printf("Сервер запущен на %s\n", cfg.ServerAddress)
-	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
+
+	startServer(cfg, r)
+}
+
+func startServer(cfg *config.Options, handler http.Handler) {
+	if cfg.EnableHTTPS {
+		log.Printf("Запуск HTTPS сервера на %s\n", cfg.ServerAddress)
+		log.Println("HTTPS включен с автоматическими сертификатами Let's Encrypt")
+
+		manager := &autocert.Manager{
+			Cache:  autocert.DirCache("cache-dir"),
+			Prompt: autocert.AcceptTOS,
+		}
+
+		server := &http.Server{
+			Addr:      cfg.ServerAddress,
+			Handler:   handler,
+			TLSConfig: manager.TLSConfig(),
+		}
+
+		if err := server.ListenAndServeTLS("", ""); err != nil {
+			log.Fatal("Ошибка запуска HTTPS сервера:", err)
+		}
+	} else {
+		log.Printf("Запуск HTTP сервера на %s\n", cfg.ServerAddress)
+		if err := http.ListenAndServe(cfg.ServerAddress, handler); err != nil {
+			log.Fatal("Ошибка запуска HTTP сервера:", err)
+		}
+	}
 }
 
 func getLogger() *zap.Logger {
@@ -127,4 +158,25 @@ func getAuditPublisher(cfg *config.Options) audit.IPublisher {
 	}
 
 	return publisher
+}
+
+func printBuildInfo() {
+	version := buildVersion
+	if version == "" {
+		version = "N/A"
+	}
+
+	date := buildDate
+	if date == "" {
+		date = "N/A"
+	}
+
+	commit := buildCommit
+	if commit == "" {
+		commit = "N/A"
+	}
+
+	fmt.Printf("Build version: %s\n", version)
+	fmt.Printf("Build date: %s\n", date)
+	fmt.Printf("Build commit: %s\n", commit)
 }
