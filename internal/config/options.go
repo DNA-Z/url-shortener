@@ -79,10 +79,7 @@ func (o *Options) OptionsInit() {
 		o.SecretKeySet(&o.SecretKey)
 		o.AuditFileSet(&o.AuditFile)
 		o.AuditURLSet(&o.AuditURL)
-
-		// Для HTTPS используем значение по умолчанию
-		enableHTTPSFlag := flag.Bool("s", defaultEnableHTTPS, "включить HTTPS")
-		o.EnableHTTPSSet(enableHTTPSFlag)
+		o.EnableHTTPSSet(&o.EnableHTTPS)
 	}
 }
 

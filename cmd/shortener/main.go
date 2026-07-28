@@ -113,20 +113,6 @@ func startServer(cfg *config.Options, handler http.Handler) {
 	}
 }
 
-func startServer2(cfg *config.Options, handler http.Handler) {
-	if cfg.EnableHTTPS {
-		log.Printf("Запуск HTTPS сервера на %s\n", cfg.ServerAddress)
-		if err := http.ListenAndServeTLS(cfg.ServerAddress, "server.crt", "server.key", handler); err != nil {
-			log.Fatal("Ошибка запуска HTTPS сервера:", err)
-		}
-	} else {
-		log.Printf("Запуск HTTP сервера на %s\n", cfg.ServerAddress)
-		if err := http.ListenAndServe(cfg.ServerAddress, handler); err != nil {
-			log.Fatal("Ошибка запуска HTTP сервера:", err)
-		}
-	}
-}
-
 func getLogger() *zap.Logger {
 	logger, err := zap.NewDevelopment()
 	if err != nil {
