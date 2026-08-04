@@ -12,6 +12,10 @@ import (
 	"net/http"
 	"net/http/pprof"
 	_ "net/http/pprof"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/DNA-Z/url-shortener/internal/audit"
 	"github.com/DNA-Z/url-shortener/internal/auth"
@@ -87,6 +91,33 @@ func main() {
 }
 
 func startServer(cfg *config.Options, handler http.Handler) {
+	server := &http.Server{
+		Addr:    cfg.ServerAddress,
+		Handler: handler,
+	}
+
+	idleConnsClosed := make(chan struct{})
+	sigint := make(chan os.Signal, 1)
+
+	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	go func() {
+		<-sigint
+		log.Println("Получен сигнал завершения, начинаем graceful shutdown...")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("Ошибка при graceful shutdown: %v", err)
+		}
+
+		log.Println("HTTP сервер завершил работу gracefully")
+
+		close(idleConnsClosed)
+	}()
+
+	var err error
 	if cfg.EnableHTTPS {
 		log.Printf("Запуск HTTPS сервера на %s\n", cfg.ServerAddress)
 		log.Println("HTTPS включен с автоматическими сертификатами Let's Encrypt")
@@ -96,21 +127,19 @@ func startServer(cfg *config.Options, handler http.Handler) {
 			Prompt: autocert.AcceptTOS,
 		}
 
-		server := &http.Server{
-			Addr:      cfg.ServerAddress,
-			Handler:   handler,
-			TLSConfig: manager.TLSConfig(),
-		}
-
-		if err := server.ListenAndServeTLS("", ""); err != nil {
-			log.Fatal("Ошибка запуска HTTPS сервера:", err)
-		}
+		server.TLSConfig = manager.TLSConfig()
+		err = server.ListenAndServeTLS("", "")
 	} else {
 		log.Printf("Запуск HTTP сервера на %s\n", cfg.ServerAddress)
-		if err := http.ListenAndServe(cfg.ServerAddress, handler); err != nil {
-			log.Fatal("Ошибка запуска HTTP сервера:", err)
-		}
+		err = server.ListenAndServe()
 	}
+
+	if err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Ошибка запуска HTTP сервера: %v", err)
+	}
+
+	<-idleConnsClosed
+	log.Println("Сервер полностью остановлен, ресурсы освобождены")
 }
 
 func getLogger() *zap.Logger {
