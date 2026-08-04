@@ -56,8 +56,7 @@ func (h *URLHandler) GetByIDGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "URL is gone", http.StatusGone)
 	}
 
-	var result string
-	result = url.OriginalUrl
+	result := url.OriginalURL
 
 	w.Header().Set("Location", result)
 	w.WriteHeader(http.StatusTemporaryRedirect)
@@ -68,7 +67,7 @@ func (h *URLHandler) GetByIDGet(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-		event := audit.NewEvent(audit.Follow, userID, url.OriginalUrl)
+		event := audit.NewEvent(audit.Follow, userID, url.OriginalURL)
 		h.publisher.Publish(event)
 	}
 }
