@@ -152,3 +152,12 @@ func newURLService(store storage.URLStorage, isDB bool) (*URLStorage, error) {
 
 	return urlService, nil
 }
+
+func (u *URLStorage) GetStats() (*dto.StatsDto, error) {
+	stats, err := u.storage.GetStats()
+	if err != nil {
+		log.Printf("Failed to get stats: %v", err)
+		return nil, err
+	}
+	return &stats, nil
+}

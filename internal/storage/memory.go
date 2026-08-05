@@ -112,3 +112,23 @@ func (m *MemoryStorage) LoadAll() (map[string]string, error) {
 	}
 	return clone, nil
 }
+
+func (m *MemoryStorage) GetStats() (dto.StatsDto, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var stats dto.StatsDto
+	uniqueUsers := make(map[uuid.UUID]bool)
+
+	for _, url := range m.urls {
+		if !url.IsDeleted {
+			stats.URLs++
+			if url.UserID != uuid.Nil {
+				uniqueUsers[url.UserID] = true
+			}
+		}
+	}
+
+	stats.Users = len(uniqueUsers)
+	return stats, nil
+}

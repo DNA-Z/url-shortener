@@ -54,7 +54,7 @@ func main() {
 	auditPublisher := getAuditPublisher(cfg)
 	defer auditPublisher.Close()
 
-	urlHandler := handler.NewURLHandler(urlService, cfg.ServerAddress, cfg.BaseURL, auditPublisher)
+	urlHandler := handler.NewURLHandler(urlService, cfg, auditPublisher)
 	pingHandler := handler.NewDBPingHandler(cfg, sqlDB)
 
 	middleware.InitLogger(logger)
@@ -79,6 +79,7 @@ func main() {
 		r.Use(middleware.AuthMiddleware)
 		r.Get("/{id}", urlHandler.GetByIDGet)
 		r.Get("/api/user/urls", urlHandler.GetUserURLs)
+		r.Get("/api/internal/stats", urlHandler.StatsGet)
 		r.Post("/", urlHandler.ShortenerPost)
 		r.Post("/api/shorten", urlHandler.ShortenURLPost)
 		r.Post("/api/shorten/batch", urlHandler.ShortenBatchPost)

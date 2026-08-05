@@ -243,3 +243,30 @@ func (d *DBStorage) write(stmt *sql.Stmt, url *model.URL) error {
 	log.Printf("saved url: %s -> %s", url.ShortURL, url.OriginalURL)
 	return nil
 }
+
+func (d *DBStorage) GetStats() (dto.StatsDto, error) {
+	query, err := sqlFiles.ReadFile("queries/get_stats.sql")
+	if err != nil {
+		log.Printf("failed to read get_stats.sql: %v", err)
+		return dto.StatsDto{}, err
+	}
+
+	stmt, err := d.db.PrepareContext(context.Background(), string(query))
+	if err != nil {
+		log.Printf("failed to GetStats() prepare statement: %v", err)
+		return dto.StatsDto{}, err
+	}
+	defer stmt.Close()
+
+	var urlsCount, usersCount int
+	err = stmt.QueryRowContext(context.Background()).Scan(&urlsCount, &usersCount)
+	if err != nil {
+		log.Printf("failed to GetStats() execute statement: %v", err)
+		return dto.StatsDto{}, err
+	}
+
+	return dto.StatsDto{
+		URLs:  urlsCount,
+		Users: usersCount,
+	}, nil
+}

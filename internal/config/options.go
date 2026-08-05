@@ -22,6 +22,7 @@ type JSONConfig struct {
 	FileStoragePath string `json:"file_storage_path"`
 	DatabaseDSN     string `json:"database_dsn"`
 	EnableHTTPS     bool   `json:"enable_https"`
+	TrustedSubnet   string `json:"trusted_subnet"`
 }
 
 // Options содержит все настройки сервиса.
@@ -35,6 +36,7 @@ type Options struct {
 	AuditURL         string
 	EnableHTTPS      bool
 	ConfigFile       string
+	TrustedSubnet    string
 }
 
 // NewOptions создает новый экземпляр Options со значениями по умолчанию.
@@ -49,6 +51,7 @@ func NewOptions() *Options {
 		AuditURL:         "",
 		EnableHTTPS:      false,
 		ConfigFile:       "",
+		TrustedSubnet:    "192.168.1.0/24",
 	}
 }
 
@@ -63,6 +66,7 @@ func (o *Options) OptionsInit() {
 	defaultAuditURL := o.AuditURL
 	defaultEnableHTTPS := o.EnableHTTPS
 	defaultConfigFile := o.ConfigFile
+	defaultTrustedSubnet := o.TrustedSubnet
 
 	var jsonConfig *JSONConfig
 
@@ -76,6 +80,7 @@ func (o *Options) OptionsInit() {
 		auditURLFlag := flag.String("audit-url", defaultAuditURL, "URL сервера для отправки логов аудита")
 		enableHTTPSFlag := flag.Bool("s", defaultEnableHTTPS, "включить HTTPS")
 		configFile := flag.String("c", defaultConfigFile, "конфигурационный файл")
+		trustedSubnetFlag := flag.String("t", defaultTrustedSubnet, "бесклассовая адресация")
 
 		flag.Parse()
 
@@ -90,6 +95,7 @@ func (o *Options) OptionsInit() {
 		o.AuditURLSet(auditURLFlag)
 		o.EnableHTTPSSet(enableHTTPSFlag, jsonConfig)
 		o.ConfigFileSet(configFile)
+		o.TrustedSubnetSet(trustedSubnetFlag)
 	} else {
 		// Флаги уже проинициализированы
 		o.ServerAddressSet(&o.ServerAddress, jsonConfig)
@@ -101,6 +107,7 @@ func (o *Options) OptionsInit() {
 		o.AuditURLSet(&o.AuditURL)
 		o.EnableHTTPSSet(&o.EnableHTTPS, jsonConfig)
 		o.ConfigFileSet(&o.ConfigFile)
+		o.TrustedSubnetSet(&o.TrustedSubnet)
 	}
 }
 
@@ -190,6 +197,15 @@ func (o *Options) ConfigFileSet(configFileFlag *string) {
 	switch {
 	case os.Getenv("CONFIG") != "":
 		o.ConfigFile = os.Getenv("CONFIG")
+	case *configFileFlag != o.ConfigFile:
+		o.ConfigFile = *configFileFlag
+	}
+}
+
+func (o *Options) TrustedSubnetSet(configFileFlag *string) {
+	switch {
+	case os.Getenv("TRUSTED_SUBNET") != "":
+		o.ConfigFile = os.Getenv("TRUSTED_SUBNET")
 	case *configFileFlag != o.ConfigFile:
 		o.ConfigFile = *configFileFlag
 	}

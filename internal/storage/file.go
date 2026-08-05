@@ -219,3 +219,23 @@ func (f *FileStorage) saveAllToFile() error {
 
 	return f.writer.Flush()
 }
+
+func (f *FileStorage) GetStats() (dto.StatsDto, error) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	var stats dto.StatsDto
+	uniqueUsers := make(map[uuid.UUID]bool)
+
+	for _, url := range f.data {
+		if !url.IsDeleted {
+			stats.URLs++
+			if url.UserID != uuid.Nil {
+				uniqueUsers[url.UserID] = true
+			}
+		}
+	}
+
+	stats.Users = len(uniqueUsers)
+	return stats, nil
+}

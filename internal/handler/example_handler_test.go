@@ -30,7 +30,7 @@ func Example_shortenURL() {
 	svc, _ := service.NewURLService(store, false)
 	publisher := audit.NewPublisher()
 
-	h := handler.NewURLHandler(svc, cfg.ServerAddress, cfg.BaseURL, publisher)
+	h := handler.NewURLHandler(svc, cfg, publisher)
 
 	r := chi.NewRouter()
 	r.Post("/", h.ShortenerPost)
@@ -58,7 +58,7 @@ func Example_shortenURLJSON() {
 	svc, _ := service.NewURLService(store, false)
 	publisher := audit.NewPublisher()
 
-	h := handler.NewURLHandler(svc, cfg.ServerAddress, cfg.BaseURL, publisher)
+	h := handler.NewURLHandler(svc, cfg, publisher)
 
 	r := chi.NewRouter()
 	r.Post("/api/shorten", h.ShortenURLPost)
@@ -89,7 +89,7 @@ func Example_batchShorten() {
 	svc, _ := service.NewURLService(store, false)
 	publisher := audit.NewPublisher()
 
-	h := handler.NewURLHandler(svc, cfg.ServerAddress, cfg.BaseURL, publisher)
+	h := handler.NewURLHandler(svc, cfg, publisher)
 
 	r := chi.NewRouter()
 	r.Post("/api/shorten/batch", h.ShortenBatchPost)
@@ -123,7 +123,7 @@ func Example_getUserURLs() {
 	svc, _ := service.NewURLService(store, false)
 	publisher := audit.NewPublisher()
 
-	h := handler.NewURLHandler(svc, cfg.ServerAddress, cfg.BaseURL, publisher)
+	h := handler.NewURLHandler(svc, cfg, publisher)
 
 	r := chi.NewRouter()
 	r.Get("/api/user/urls", h.GetUserURLs)
@@ -151,7 +151,7 @@ func Example_deleteUserURLs() {
 	svc, _ := service.NewURLService(store, false)
 	publisher := audit.NewPublisher()
 
-	h := handler.NewURLHandler(svc, cfg.ServerAddress, cfg.BaseURL, publisher)
+	h := handler.NewURLHandler(svc, cfg, publisher)
 
 	r := chi.NewRouter()
 	r.Delete("/api/user/urls", h.DeleteUserURLs)
