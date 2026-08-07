@@ -12,6 +12,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
+	"log"
 	"os"
 )
 
@@ -69,6 +71,7 @@ func (o *Options) OptionsInit() {
 	defaultTrustedSubnet := o.TrustedSubnet
 
 	var jsonConfig *JSONConfig
+	var err error
 
 	if flag.Lookup("a") == nil {
 		serverAddressFlag := flag.String("a", defaultServerAddress, "адрес HTTP-сервера")
@@ -84,7 +87,10 @@ func (o *Options) OptionsInit() {
 
 		flag.Parse()
 
-		jsonConfig = o.readConfigFile(configFile)
+		jsonConfig, err = o.readConfigFile(configFile)
+		if err != nil {
+			log.Printf("Warning: failed to read config file: %v", err)
+		}
 
 		o.ServerAddressSet(serverAddressFlag, jsonConfig)
 		o.BaseURLSet(baseURLFlag, jsonConfig)
@@ -211,33 +217,33 @@ func (o *Options) TrustedSubnetSet(configFileFlag *string) {
 	}
 }
 
-func (o *Options) readConfigFile(configFileFlag *string) *JSONConfig {
+func (o *Options) readConfigFile(configFileFlag *string) (*JSONConfig, error) {
 	configFile := *configFileFlag
 	if configFile == "" {
 		configFile = os.Getenv("CONFIG")
 	}
 	if configFile == "" {
-		return nil
+		return nil, nil
 	}
 
 	file, err := os.Open(configFile)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("failed to open config file %s: %w", configFile, err)
 	}
 	defer file.Close()
 
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(file)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("failed to read config file %s: %w", configFile, err)
 	}
 
 	data := buf.Bytes()
 
 	var cfg JSONConfig
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil
+		return nil, fmt.Errorf("failed to parse config file %s: %w", configFile, err)
 	}
 
-	return &cfg
+	return &cfg, nil
 }

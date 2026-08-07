@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net"
 	"net/http"
 )
@@ -69,11 +70,15 @@ func (h *URLHandler) StatsGet(w http.ResponseWriter, r *http.Request) {
 		"users": stats.Users,
 	}
 
+	jsonData, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+	if _, err := w.Write(jsonData); err != nil {
+		log.Printf("Error writing response: %v", err)
 	}
 }
