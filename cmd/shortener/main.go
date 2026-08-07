@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	_ "net/http/pprof"
@@ -17,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/DNA-Z/url-shortener/api/proto"
 	"github.com/DNA-Z/url-shortener/internal/audit"
 	"github.com/DNA-Z/url-shortener/internal/auth"
 	"github.com/DNA-Z/url-shortener/internal/config"
@@ -25,9 +27,9 @@ import (
 	"github.com/DNA-Z/url-shortener/internal/service"
 	"github.com/DNA-Z/url-shortener/internal/storage"
 	"github.com/go-chi/chi/v5"
-
 	"go.uber.org/zap"
 	"golang.org/x/crypto/acme/autocert"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -45,6 +47,13 @@ func main() {
 	cfg := config.NewOptions()
 	cfg.OptionsInit()
 
+	log.Printf("Конфигурация:")
+	log.Printf("  HTTP адрес: %s", cfg.ServerAddress)
+	log.Printf("  gRPC адрес: %s", cfg.GRPCServerAddress)
+	log.Printf("  gRPC включен: %v", cfg.EnableGRPC)
+	log.Printf("  Base URL: %s", cfg.BaseURL)
+	log.Printf("  HTTPS: %v", cfg.EnableHTTPS)
+
 	auth.SetJWTSecretKey(cfg.SecretKey)
 	middleware.InitAuthMiddleware(auth.IsAuthEnabled())
 
@@ -56,6 +65,8 @@ func main() {
 
 	urlHandler := handler.NewURLHandler(urlService, cfg, auditPublisher)
 	pingHandler := handler.NewDBPingHandler(cfg, sqlDB)
+
+	grpcHandler := handler.NewGRPCHandler(urlService, cfg.BaseURL)
 
 	middleware.InitLogger(logger)
 
@@ -86,61 +97,66 @@ func main() {
 		r.Delete("/api/user/urls", urlHandler.DeleteUserURLs)
 	})
 
-	log.Printf("Сервер запущен на %s\n", cfg.ServerAddress)
+	go startHTTPServer(cfg, r)
 
-	startServer(cfg, r)
+	if cfg.EnableGRPC {
+		go startGRPCServer(cfg, grpcHandler)
+	}
+
+	waitForShutdown()
 }
 
-func startServer(cfg *config.Options, handler http.Handler) {
+func startHTTPServer(cfg *config.Options, handler http.Handler) {
 	server := &http.Server{
 		Addr:    cfg.ServerAddress,
 		Handler: handler,
 	}
 
-	idleConnsClosed := make(chan struct{})
-	sigint := make(chan os.Signal, 1)
-
-	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-
-	go func() {
-		<-sigint
-		log.Println("Получен сигнал завершения, начинаем graceful shutdown...")
-
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-
-		if err := server.Shutdown(ctx); err != nil {
-			log.Printf("Ошибка при graceful shutdown: %v", err)
-		}
-
-		log.Println("HTTP сервер завершил работу gracefully")
-
-		close(idleConnsClosed)
-	}()
+	log.Printf("HTTP сервер запущен на %s", cfg.ServerAddress)
 
 	var err error
 	if cfg.EnableHTTPS {
-		log.Printf("Запуск HTTPS сервера на %s\n", cfg.ServerAddress)
 		log.Println("HTTPS включен с автоматическими сертификатами Let's Encrypt")
-
 		manager := &autocert.Manager{
 			Cache:  autocert.DirCache("cache-dir"),
 			Prompt: autocert.AcceptTOS,
 		}
-
 		server.TLSConfig = manager.TLSConfig()
 		err = server.ListenAndServeTLS("", "")
 	} else {
-		log.Printf("Запуск HTTP сервера на %s\n", cfg.ServerAddress)
 		err = server.ListenAndServe()
 	}
 
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Ошибка запуска HTTP сервера: %v", err)
 	}
+}
 
-	<-idleConnsClosed
-	log.Println("Сервер полностью остановлен, ресурсы освобождены")
+func startGRPCServer(cfg *config.Options, grpcHandler *handler.GRPCHandler) {
+	grpcServer := grpc.NewServer()
+	shortener.RegisterShortenerServiceServer(grpcServer, grpcHandler)
+
+	lis, err := net.Listen("tcp", cfg.GRPCServerAddress)
+	if err != nil {
+		log.Fatalf("Failed to listen on gRPC port %s: %v", cfg.GRPCServerAddress, err)
+	}
+	log.Printf("gRPC сервер запущен на %s", cfg.GRPCServerAddress)
+
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("Failed to start gRPC server: %v", err)
+	}
+}
+
+func waitForShutdown() {
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	<-sigint
+	log.Println("Получен сигнал завершения, начинаем graceful shutdown...")
+
+	time.Sleep(5 * time.Second)
+
+	log.Println("Сервер завершил работу gracefully")
 }
 
 func getLogger() *zap.Logger {
