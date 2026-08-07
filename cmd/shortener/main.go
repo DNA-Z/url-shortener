@@ -7,10 +7,15 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/pprof"
 	_ "net/http/pprof"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/DNA-Z/url-shortener/internal/audit"
 	"github.com/DNA-Z/url-shortener/internal/auth"
@@ -22,9 +27,18 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"go.uber.org/zap"
+	"golang.org/x/crypto/acme/autocert"
+)
+
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
 )
 
 func main() {
+	printBuildInfo()
+
 	logger := getLogger()
 	defer logger.Sync()
 
@@ -40,7 +54,7 @@ func main() {
 	auditPublisher := getAuditPublisher(cfg)
 	defer auditPublisher.Close()
 
-	urlHandler := handler.NewURLHandler(urlService, cfg.ServerAddress, cfg.BaseURL, auditPublisher)
+	urlHandler := handler.NewURLHandler(urlService, cfg, auditPublisher)
 	pingHandler := handler.NewDBPingHandler(cfg, sqlDB)
 
 	middleware.InitLogger(logger)
@@ -59,27 +73,74 @@ func main() {
 		r.Get("/{name}", pprof.Index)
 	})
 
-	r.Get("/ping", pingHandler.GetDbPing)
+	r.Get("/ping", pingHandler.GetDBPing)
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)
 		r.Get("/{id}", urlHandler.GetByIDGet)
 		r.Get("/api/user/urls", urlHandler.GetUserURLs)
+		r.Get("/api/internal/stats", urlHandler.StatsGet)
 		r.Post("/", urlHandler.ShortenerPost)
 		r.Post("/api/shorten", urlHandler.ShortenURLPost)
 		r.Post("/api/shorten/batch", urlHandler.ShortenBatchPost)
 		r.Delete("/api/user/urls", urlHandler.DeleteUserURLs)
 	})
 
-	//go func() {
-	//	log.Println("Starting pprof on :6060")
-	//	if err := http.ListenAndServe(":6060", nil); err != nil {
-	//		log.Printf("pprof server error: %v", err)
-	//	}
-	//}()
-
 	log.Printf("Сервер запущен на %s\n", cfg.ServerAddress)
-	log.Fatal(http.ListenAndServe(cfg.ServerAddress, r))
+
+	startServer(cfg, r)
+}
+
+func startServer(cfg *config.Options, handler http.Handler) {
+	server := &http.Server{
+		Addr:    cfg.ServerAddress,
+		Handler: handler,
+	}
+
+	idleConnsClosed := make(chan struct{})
+	sigint := make(chan os.Signal, 1)
+
+	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	go func() {
+		<-sigint
+		log.Println("Получен сигнал завершения, начинаем graceful shutdown...")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("Ошибка при graceful shutdown: %v", err)
+		}
+
+		log.Println("HTTP сервер завершил работу gracefully")
+
+		close(idleConnsClosed)
+	}()
+
+	var err error
+	if cfg.EnableHTTPS {
+		log.Printf("Запуск HTTPS сервера на %s\n", cfg.ServerAddress)
+		log.Println("HTTPS включен с автоматическими сертификатами Let's Encrypt")
+
+		manager := &autocert.Manager{
+			Cache:  autocert.DirCache("cache-dir"),
+			Prompt: autocert.AcceptTOS,
+		}
+
+		server.TLSConfig = manager.TLSConfig()
+		err = server.ListenAndServeTLS("", "")
+	} else {
+		log.Printf("Запуск HTTP сервера на %s\n", cfg.ServerAddress)
+		err = server.ListenAndServe()
+	}
+
+	if err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Ошибка запуска HTTP сервера: %v", err)
+	}
+
+	<-idleConnsClosed
+	log.Println("Сервер полностью остановлен, ресурсы освобождены")
 }
 
 func getLogger() *zap.Logger {
@@ -127,4 +188,25 @@ func getAuditPublisher(cfg *config.Options) audit.IPublisher {
 	}
 
 	return publisher
+}
+
+func printBuildInfo() {
+	version := buildVersion
+	if version == "" {
+		version = "N/A"
+	}
+
+	date := buildDate
+	if date == "" {
+		date = "N/A"
+	}
+
+	commit := buildCommit
+	if commit == "" {
+		commit = "N/A"
+	}
+
+	fmt.Printf("Build version: %s\n", version)
+	fmt.Printf("Build date: %s\n", date)
+	fmt.Printf("Build commit: %s\n", commit)
 }

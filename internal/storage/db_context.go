@@ -26,7 +26,7 @@ func DBConnect(ctx context.Context, connectionString string) (*sql.DB, error) {
 
 	if err := db.PingContext(ctxWithTimeout); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("Failed to ping database: %w", err)
+		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
 	log.Println("Database connected successfully")

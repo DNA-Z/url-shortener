@@ -133,7 +133,7 @@ func (f *FileStorage) Get(shortURL string) (dto.GetByIDDto, error) {
 	for _, url := range f.data {
 		if url.ShortURL == shortURL {
 			return dto.GetByIDDto{
-				OriginalUrl: url.OriginalURL,
+				OriginalURL: url.OriginalURL,
 				IsDeleted:   url.IsDeleted,
 			}, nil
 		}
@@ -218,4 +218,24 @@ func (f *FileStorage) saveAllToFile() error {
 	}
 
 	return f.writer.Flush()
+}
+
+func (f *FileStorage) GetStats() (dto.StatsDto, error) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	var stats dto.StatsDto
+	uniqueUsers := make(map[uuid.UUID]bool)
+
+	for _, url := range f.data {
+		if !url.IsDeleted {
+			stats.URLs++
+			if url.UserID != uuid.Nil {
+				uniqueUsers[url.UserID] = true
+			}
+		}
+	}
+
+	stats.Users = len(uniqueUsers)
+	return stats, nil
 }

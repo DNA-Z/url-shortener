@@ -1,3 +1,4 @@
+// Package errors содержит переопределенный метод для возврата ошибки
 package errors
 
 import "fmt"
