@@ -19,41 +19,47 @@ import (
 
 // JSONConfig представляет структуру конфигурационного файла.
 type JSONConfig struct {
-	ServerAddress   string `json:"server_address"`
-	BaseURL         string `json:"base_url"`
-	FileStoragePath string `json:"file_storage_path"`
-	DatabaseDSN     string `json:"database_dsn"`
-	EnableHTTPS     bool   `json:"enable_https"`
-	TrustedSubnet   string `json:"trusted_subnet"`
+	ServerAddress     string `json:"server_address"`
+	BaseURL           string `json:"base_url"`
+	FileStoragePath   string `json:"file_storage_path"`
+	DatabaseDSN       string `json:"database_dsn"`
+	EnableHTTPS       bool   `json:"enable_https"`
+	TrustedSubnet     string `json:"trusted_subnet"`
+	GRPCServerAddress string `json:"grpc_server_address"`
+	EnableGRPC        bool   `json:"enable_grpc"`
 }
 
 // Options содержит все настройки сервиса.
 type Options struct {
-	ServerAddress    string
-	BaseURL          string
-	FileStoragePath  string
-	ConnectionString string
-	SecretKey        string
-	AuditFile        string
-	AuditURL         string
-	EnableHTTPS      bool
-	ConfigFile       string
-	TrustedSubnet    string
+	ServerAddress     string
+	BaseURL           string
+	FileStoragePath   string
+	ConnectionString  string
+	SecretKey         string
+	AuditFile         string
+	AuditURL          string
+	EnableHTTPS       bool
+	ConfigFile        string
+	TrustedSubnet     string
+	GRPCServerAddress string
+	EnableGRPC        bool
 }
 
 // NewOptions создает новый экземпляр Options со значениями по умолчанию.
 func NewOptions() *Options {
 	return &Options{
-		ServerAddress:    "localhost:8080",
-		BaseURL:          "http://localhost:8080/",
-		FileStoragePath:  "short_url",
-		ConnectionString: "",
-		SecretKey:        "superSecretKey",
-		AuditFile:        "",
-		AuditURL:         "",
-		EnableHTTPS:      false,
-		ConfigFile:       "",
-		TrustedSubnet:    "192.168.1.0/24",
+		ServerAddress:     "localhost:8080",
+		BaseURL:           "http://localhost:8080/",
+		FileStoragePath:   "short_url",
+		ConnectionString:  "",
+		SecretKey:         "superSecretKey",
+		AuditFile:         "",
+		AuditURL:          "",
+		EnableHTTPS:       false,
+		ConfigFile:        "",
+		TrustedSubnet:     "192.168.1.0/24",
+		GRPCServerAddress: "localhost:8081",
+		EnableGRPC:        true,
 	}
 }
 
@@ -69,6 +75,8 @@ func (o *Options) OptionsInit() {
 	defaultEnableHTTPS := o.EnableHTTPS
 	defaultConfigFile := o.ConfigFile
 	defaultTrustedSubnet := o.TrustedSubnet
+	defaultGRPCServerAddress := o.GRPCServerAddress
+	defaultEnableGRPC := o.EnableGRPC
 
 	var jsonConfig *JSONConfig
 	var err error
@@ -84,6 +92,8 @@ func (o *Options) OptionsInit() {
 		enableHTTPSFlag := flag.Bool("s", defaultEnableHTTPS, "включить HTTPS")
 		configFile := flag.String("c", defaultConfigFile, "конфигурационный файл")
 		trustedSubnetFlag := flag.String("t", defaultTrustedSubnet, "бесклассовая адресация")
+		grpcAddressFlag := flag.String("g", defaultGRPCServerAddress, "адрес gRPC-сервера")
+		enableGRPCFlag := flag.Bool("grpc", defaultEnableGRPC, "включить gRPC сервер")
 
 		flag.Parse()
 
@@ -102,6 +112,8 @@ func (o *Options) OptionsInit() {
 		o.EnableHTTPSSet(enableHTTPSFlag, jsonConfig)
 		o.ConfigFileSet(configFile)
 		o.TrustedSubnetSet(trustedSubnetFlag)
+		o.GRPCServerAddressSet(grpcAddressFlag, jsonConfig)
+		o.EnableGRPCSet(enableGRPCFlag, jsonConfig)
 	} else {
 		// Флаги уже проинициализированы
 		o.ServerAddressSet(&o.ServerAddress, jsonConfig)
@@ -114,6 +126,8 @@ func (o *Options) OptionsInit() {
 		o.EnableHTTPSSet(&o.EnableHTTPS, jsonConfig)
 		o.ConfigFileSet(&o.ConfigFile)
 		o.TrustedSubnetSet(&o.TrustedSubnet)
+		o.GRPCServerAddressSet(&o.GRPCServerAddress, jsonConfig)
+		o.EnableGRPCSet(&o.EnableGRPC, jsonConfig)
 	}
 }
 
@@ -214,6 +228,28 @@ func (o *Options) TrustedSubnetSet(configFileFlag *string) {
 		o.ConfigFile = os.Getenv("TRUSTED_SUBNET")
 	case *configFileFlag != o.ConfigFile:
 		o.ConfigFile = *configFileFlag
+	}
+}
+
+func (o *Options) GRPCServerAddressSet(grpcAddressFlag *string, jsonConfig *JSONConfig) {
+	switch {
+	case os.Getenv("GRPC_SERVER_ADDRESS") != "":
+		o.GRPCServerAddress = os.Getenv("GRPC_SERVER_ADDRESS")
+	case *grpcAddressFlag != o.GRPCServerAddress:
+		o.GRPCServerAddress = *grpcAddressFlag
+	case jsonConfig != nil && jsonConfig.GRPCServerAddress != "":
+		o.GRPCServerAddress = jsonConfig.GRPCServerAddress
+	}
+}
+
+func (o *Options) EnableGRPCSet(enableGRPCFlag *bool, jsonConfig *JSONConfig) {
+	switch {
+	case os.Getenv("ENABLE_GRPC") != "":
+		o.EnableGRPC = os.Getenv("ENABLE_GRPC") == "true"
+	case *enableGRPCFlag != o.EnableGRPC:
+		o.EnableGRPC = *enableGRPCFlag
+	case jsonConfig != nil:
+		o.EnableGRPC = jsonConfig.EnableGRPC
 	}
 }
 
