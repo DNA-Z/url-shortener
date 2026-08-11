@@ -1,3 +1,4 @@
+// Package service содержит методы обработки запросов от хэндлеров
 package service
 
 import (
@@ -91,7 +92,7 @@ func (u *URLStorage) GetOriginURLByShortURL(shortURL string) (dto.GetByIDDto, er
 		return dto.GetByIDDto{}, err
 	}
 
-	log.Printf("Result URL: %v", url.OriginalUrl)
+	log.Printf("Result URL: %v", url.OriginalURL)
 	return url, nil
 }
 
@@ -111,8 +112,7 @@ func (u *URLStorage) GetUserURLsByUserID(userID uuid.UUID) ([]dto.UserURLsRespon
 func (u *URLStorage) DeleteUserURLs(userID uuid.UUID, shortURLs []string) error {
 	log.Printf("Delete users URLs called with userID='%s'", userID.String())
 
-	var err error
-	err = u.storage.DeleteUserURLs(userID, shortURLs)
+	err := u.storage.DeleteUserURLs(userID, shortURLs)
 	if err != nil {
 		log.Printf("Delete users URLs failed: %v", err)
 		return err
@@ -125,7 +125,8 @@ func (u *URLStorage) Batch(userID uuid.UUID, request []dto.BatchRequestDto, base
 	response = make([]dto.BatchResponseDto, 0, len(request))
 
 	for _, req := range request {
-		shortURL, err := u.Shorten(userID, req.OriginalURL)
+		var shortURL string
+		shortURL, err = u.Shorten(userID, req.OriginalURL)
 
 		log.Printf("shortened from '%+q' -> '%+q'\n", req.OriginalURL, shortURL)
 
@@ -150,4 +151,13 @@ func newURLService(store storage.URLStorage, isDB bool) (*URLStorage, error) {
 	}
 
 	return urlService, nil
+}
+
+func (u *URLStorage) GetStats() (*dto.StatsDto, error) {
+	stats, err := u.storage.GetStats()
+	if err != nil {
+		log.Printf("Failed to get stats: %v", err)
+		return nil, err
+	}
+	return &stats, nil
 }

@@ -1,0 +1,10 @@
+{
+    "server_address": "localhost:8080",
+    "base_url": "http://localhost",
+    "file_storage_path": "short_url",
+    "database_dsn": "",
+    "enable_https": false,
+    "trusted_subnet": "192.168.1.0/24",
+    "grpc_server_address": "localhost:8081",
+    "enable_grpc": false
+} 

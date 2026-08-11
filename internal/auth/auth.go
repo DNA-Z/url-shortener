@@ -1,3 +1,4 @@
+// Package auth служит для аутентификации и авторизации пользователей.
 package auth
 
 import (
@@ -60,7 +61,7 @@ func GetUserID(tokenStrring string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenStrring, claims,
 		func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			return []byte(jwtSecretKey), nil
 		})
@@ -70,11 +71,9 @@ func GetUserID(tokenStrring string) (string, error) {
 	}
 
 	if !token.Valid {
-		fmt.Println("Token is not valid")
-		return "", err
+		return "", fmt.Errorf("token is not valid")
 	}
 
-	fmt.Println("Token is valid")
 	return claims.UserID, nil
 }
 

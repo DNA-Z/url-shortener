@@ -26,7 +26,7 @@ func NewDBStorage(connectionString string) (*DBStorage, error) {
 		return nil, fmt.Errorf("sql.Open failed: %w", err)
 	}
 
-	if err := db.Ping(); err != nil {
+	if err = db.Ping(); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("db.Ping failed: %w", err)
 	}
@@ -61,13 +61,13 @@ func (d *DBStorage) Get(shortURL string) (dto.GetByIDDto, error) {
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRowContext(context.Background(), shortURL).Scan(&url.OriginalUrl, &url.IsDeleted)
+	err = stmt.QueryRowContext(context.Background(), shortURL).Scan(&url.OriginalURL, &url.IsDeleted)
 	if err != nil {
 		log.Printf("failed to get() execute statement: %v", err)
 		return url, err
 	}
 
-	log.Printf("Original URL: %s", url.OriginalUrl)
+	log.Printf("Original URL: %s", url.OriginalURL)
 	return url, nil
 }
 
@@ -95,7 +95,7 @@ func (d *DBStorage) LoadAll() (map[string]string, error) {
 	data := make(map[string]string)
 	for rows.Next() {
 		var short, original string
-		if err := rows.Scan(&short, &original); err != nil {
+		if err = rows.Scan(&short, &original); err != nil {
 			log.Printf("failed to load() scan: %v", err)
 			return nil, err
 		}
@@ -134,7 +134,7 @@ func (d *DBStorage) GetUserURLs(userID uuid.UUID) ([]dto.UserURLsResponseDto, er
 	var result []dto.UserURLsResponseDto
 	for rows.Next() {
 		var short, original string
-		if err := rows.Scan(&short, &original); err != nil {
+		if err = rows.Scan(&short, &original); err != nil {
 			log.Printf("failed to scan user urls: %v", err)
 			return nil, err
 		}
@@ -242,4 +242,31 @@ func (d *DBStorage) write(stmt *sql.Stmt, url *model.URL) error {
 
 	log.Printf("saved url: %s -> %s", url.ShortURL, url.OriginalURL)
 	return nil
+}
+
+func (d *DBStorage) GetStats() (dto.StatsDto, error) {
+	query, err := sqlFiles.ReadFile("queries/get_stats.sql")
+	if err != nil {
+		log.Printf("failed to read get_stats.sql: %v", err)
+		return dto.StatsDto{}, err
+	}
+
+	stmt, err := d.db.PrepareContext(context.Background(), string(query))
+	if err != nil {
+		log.Printf("failed to GetStats() prepare statement: %v", err)
+		return dto.StatsDto{}, err
+	}
+	defer stmt.Close()
+
+	var urlsCount, usersCount int
+	err = stmt.QueryRowContext(context.Background()).Scan(&urlsCount, &usersCount)
+	if err != nil {
+		log.Printf("failed to GetStats() execute statement: %v", err)
+		return dto.StatsDto{}, err
+	}
+
+	return dto.StatsDto{
+		URLs:  urlsCount,
+		Users: usersCount,
+	}, nil
 }

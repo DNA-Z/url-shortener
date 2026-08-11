@@ -99,7 +99,9 @@ func TestURLHandler_GetByIDGet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := NewURLHandler(tt.svc, "localhost:8080", "http://localhost:8080/", nil)
+			configure := config.NewOptions()
+			configure.OptionsInit()
+			h := NewURLHandler(tt.svc, configure, nil)
 			h.GetByIDGet(tt.res, tt.req)
 			rr := tt.res.(*httptest.ResponseRecorder)
 
@@ -138,7 +140,7 @@ func TestURLHandler_ShortenerPost(t *testing.T) {
 			svc, err := service.NewURL(configure)
 			require.NoError(t, err, "failed to service.NewURL(configure)")
 
-			h := NewURLHandler(svc, "localhost:8080", "http://localhost:8080/", nil)
+			h := NewURLHandler(svc, configure, nil)
 
 			req1 := httptest.NewRequest(http.MethodPost, "/shorten", bytes.NewBufferString(tt.url1))
 			req1.Host = "localhost:8080"
@@ -219,6 +221,6 @@ func TestURLHandler_ShortenURLPost(t *testing.T) {
 
 		retrievedURL, err := svc.GetOriginURLByShortURL(shortID)
 		require.NoError(t, err)
-		assert.Equal(t, originalURL, retrievedURL.OriginalUrl)
+		assert.Equal(t, originalURL, retrievedURL.OriginalURL)
 	})
 }
