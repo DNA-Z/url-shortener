@@ -15,6 +15,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -97,21 +98,44 @@ func main() {
 		r.Delete("/api/user/urls", urlHandler.DeleteUserURLs)
 	})
 
-	go startHTTPServer(cfg, r)
+	httpServer := &http.Server{
+		Addr:    cfg.ServerAddress,
+		Handler: r,
+	}
+
+	var grpcServer *grpc.Server
+	var grpcListener net.Listener
+	if cfg.EnableGRPC {
+		grpcServer = grpc.NewServer()
+		shortener.RegisterShortenerServiceServer(grpcServer, grpcHandler)
+
+		var err error
+		grpcListener, err = net.Listen("tcp", cfg.GRPCServerAddress)
+		if err != nil {
+			log.Fatalf("Failed to listen on gRPC port %s: %v", cfg.GRPCServerAddress, err)
+		}
+	}
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		startHTTPServer(httpServer, cfg)
+	}()
 
 	if cfg.EnableGRPC {
-		go startGRPCServer(cfg, grpcHandler)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			startGRPCServer(grpcServer, grpcListener)
+		}()
 	}
 
-	waitForShutdown()
+	waitForShutdown(httpServer, grpcServer, &wg)
 }
 
-func startHTTPServer(cfg *config.Options, handler http.Handler) {
-	server := &http.Server{
-		Addr:    cfg.ServerAddress,
-		Handler: handler,
-	}
-
+func startHTTPServer(server *http.Server, cfg *config.Options) {
 	log.Printf("HTTP сервер запущен на %s", cfg.ServerAddress)
 
 	var err error
@@ -132,29 +156,53 @@ func startHTTPServer(cfg *config.Options, handler http.Handler) {
 	}
 }
 
-func startGRPCServer(cfg *config.Options, grpcHandler *handler.GRPCHandler) {
-	grpcServer := grpc.NewServer()
-	shortener.RegisterShortenerServiceServer(grpcServer, grpcHandler)
+func startGRPCServer(server *grpc.Server, listener net.Listener) {
+	log.Printf("gRPC сервер запущен на %s", listener.Addr().String())
 
-	lis, err := net.Listen("tcp", cfg.GRPCServerAddress)
-	if err != nil {
-		log.Fatalf("Failed to listen on gRPC port %s: %v", cfg.GRPCServerAddress, err)
-	}
-	log.Printf("gRPC сервер запущен на %s", cfg.GRPCServerAddress)
-
-	if err := grpcServer.Serve(lis); err != nil {
+	if err := server.Serve(listener); err != nil {
 		log.Fatalf("Failed to start gRPC server: %v", err)
 	}
 }
 
-func waitForShutdown() {
+func waitForShutdown(httpServer *http.Server, grpcServer *grpc.Server, wg *sync.WaitGroup) {
 	sigint := make(chan os.Signal, 1)
 	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	<-sigint
 	log.Println("Получен сигнал завершения, начинаем graceful shutdown...")
 
-	time.Sleep(5 * time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Graceful shutdown HTTP сервера
+	log.Println("Останавливаем HTTP сервер...")
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Ошибка при остановке HTTP сервера: %v", err)
+	} else {
+		log.Println("HTTP сервер остановлен gracefully")
+	}
+
+	// Graceful stop gRPC сервера
+	if grpcServer != nil {
+		log.Println("Останавливаем gRPC сервер...")
+
+		done := make(chan struct{})
+		go func() {
+			grpcServer.GracefulStop()
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			log.Println("gRPC сервер остановлен gracefully")
+		case <-shutdownCtx.Done():
+			log.Println("Таймаут при остановке gRPC сервера, принудительное завершение")
+			grpcServer.Stop()
+		}
+	}
+
+	log.Println("Ожидаем завершения всех горутин...")
+	wg.Wait()
 
 	log.Println("Сервер завершил работу gracefully")
 }
