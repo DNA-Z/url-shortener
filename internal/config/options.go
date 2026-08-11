@@ -208,7 +208,7 @@ func (o *Options) EnableHTTPSSet(enableHTTPSFlag *bool, jsonConfig *JSONConfig) 
 		o.EnableHTTPS = os.Getenv("ENABLE_HTTPS") == "true"
 	case *enableHTTPSFlag != o.EnableHTTPS:
 		o.EnableHTTPS = *enableHTTPSFlag
-	case jsonConfig != nil && jsonConfig.EnableHTTPS == true:
+	case jsonConfig != nil:
 		o.EnableHTTPS = jsonConfig.EnableHTTPS
 	}
 }
@@ -222,12 +222,12 @@ func (o *Options) ConfigFileSet(configFileFlag *string) {
 	}
 }
 
-func (o *Options) TrustedSubnetSet(configFileFlag *string) {
+func (o *Options) TrustedSubnetSet(trustedSubnetFlag *string) {
 	switch {
 	case os.Getenv("TRUSTED_SUBNET") != "":
-		o.ConfigFile = os.Getenv("TRUSTED_SUBNET")
-	case *configFileFlag != o.ConfigFile:
-		o.ConfigFile = *configFileFlag
+		o.TrustedSubnet = os.Getenv("TRUSTED_SUBNET")
+	case *trustedSubnetFlag != o.TrustedSubnet:
+		o.TrustedSubnet = *trustedSubnetFlag
 	}
 }
 
